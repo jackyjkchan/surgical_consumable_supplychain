@@ -11,12 +11,17 @@ def process_filters(df, filters):
 
 
 def process_filter(df, filter_dict):
-    if filter_dict["op"] in ["eq", "=="]:
-        df = df[df[filter_dict["dim"]] == filter_dict["val"]]
-    elif filter_dict["op"] == "re":
-        pattern = filter_dict["val"]
-        df = df[df[filter_dict["dim"]].apply(lambda x: bool(re.search(pattern.lower(), str(x).lower())))]
-    return df
+    dim = filter_dict["dim"]
+    op = filter_dict["op"]
+    val = filter_dict["val"]
+
+    case = {
+        "eq": lambda x: x[x[dim] == val],
+        "==": lambda x: x[x[dim] == val],
+        "re": lambda x: x[x[dim].apply(lambda y: bool(re.search(val.lower(), str(y).lower())))],
+        "isin": lambda x: x[df[dim].isin(val)]
+    }
+    return case[op](df)
 
 
 class Analytics:

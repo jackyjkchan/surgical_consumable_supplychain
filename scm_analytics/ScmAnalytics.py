@@ -2,7 +2,7 @@ import pandas as pd
 from os import path
 
 
-class ScmAnalytics():
+class ScmAnalytics:
 
     def __init__(self, configs):
 
