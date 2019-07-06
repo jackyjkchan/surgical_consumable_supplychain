@@ -1,6 +1,8 @@
 import pandas as pd
 from os import path
 
+pd.options.mode.chained_assignment = None
+
 
 class ScmAnalytics:
 

@@ -23,6 +23,7 @@ surgery_df = surgery_df.drop_duplicates(subset=["event_id"])
 surgery_df = surgery_df.join(usage_df[["event_id", "used_qty"]].set_index("event_id"),
                                  on="event_id",
                                  how="left")
+
 surgery_df["used_qty"] = surgery_df["used_qty"].fillna(0)
 surgery_df["start_date"] = surgery_df["start_dt"].apply(lambda x: x.date())
 

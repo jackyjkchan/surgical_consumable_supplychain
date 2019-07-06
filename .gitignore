@@ -1,2 +1,4 @@
 src_data
 .idea
+*.pyc
+*.pyo
