@@ -84,7 +84,7 @@ def test_usage_r_regression_flow():
                                                                    other=True,
                                                                    sum_others=False)
         data["y"] = list(r_df[item_id])
-        feature_df, r2 = SURegressionModel.run_r_regression(data, feature_df, model="gaussian")
+        feature_df, r2, _ = SURegressionModel.run_r_regression(data, feature_df, model="gaussian")
         print(feature_df)
         print("r2:", r2)
         thres_df = feature_df[feature_df["feature"].isin(features+interactions)]
@@ -97,7 +97,7 @@ def test_usage_r_regression_flow():
         features = list(filter(lambda x: x in set(feature_df["feature"]), features))
 
     feature_df = feature_df[["feature", "occurrence"]]
-    feature_df, r2 = SURegressionModel.run_r_regression(data, feature_df, model="poisson")
+    feature_df, r2, _ = SURegressionModel.run_r_regression(data, feature_df, model="poisson")
     feature_df.to_csv(os.path.join("regression_results", item_id), index=False)
     data.to_csv(os.path.join("r_scripts", "test_data2.csv"), index=False)
     print(feature_df)

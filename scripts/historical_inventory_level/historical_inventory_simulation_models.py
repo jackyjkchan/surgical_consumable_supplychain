@@ -93,7 +93,7 @@ def default_demand_model_inventory_level(day_df, initial_inventory):
 
 
 case_service = "Cardiac Surgery"
-item_id = "129636"
+item_id = "38242"
 trials = 1
 
 analytics = ScmAnalytics.ScmAnalytics(lhs_config)
@@ -409,3 +409,4 @@ figure = go.Figure(
     layout=layout
 )
 plot(figure, filename=item_id+"_Inventory_Level_Trace_Gap_Filling.html")
+

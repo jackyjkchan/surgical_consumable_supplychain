@@ -197,26 +197,15 @@ def run_r_regression(data, feature_df, model="gaussian"):
         "poisson": stats.poisson()
     }[model]
 
-    # regression_results = sm.GLM(y, x, family=model).fit(maxiter=1000)
-    # feature_df["pvalue"] = list(regression_results.pvalues)
-    # feature_df["coefficient"] = list(regression_results.params)
-    # r2 = compute_rsquares(y, regression_results)
     results = stats.glm("y ~ . -1", data=pandas2ri.py2ri(data), family=model)
     r = broom.tidy_lm(results)
     df = pd.DataFrame({name: np.asarray(r.rx(name))[0] for name in r.names})
     fitted_y = list(stats.fitted(results))
     col_names = list(stats.summary_glm(results).rx2('coefficients').colnames)
-    # data = pandas2ri.ri2py(stats.summary_glm(regression_results).rx2('coefficients'))
-    # print(data)
-    # print(stats.summary_glm(regression_results))
-    # dataset = pd.DataFrame({col_names[i]: data[:, i] for i in range(len(col_names))})
-
-    # print(dataset)
-    # print(feature_df)
 
     feature_df = feature_df.join(df[["term", "estimate", "p.value"]].set_index("term"),
                                  on="feature",
                                  how="left",
                                  rsuffix="fit")
     r2 = compute_rpy2_rsquares(data["y"], fitted_y)
-    return feature_df, r2
+    return feature_df, r2, fitted_y
