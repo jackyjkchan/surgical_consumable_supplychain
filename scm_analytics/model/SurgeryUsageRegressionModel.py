@@ -42,7 +42,6 @@ def surgery_usage_regression_df(surgery_df, usage_df, item_ids=[], case_cart_df=
               rsuffix="item")\
         .fillna(0)
 
-    print(usage_df)
     procedure_df = pd.concat([pd.Series(row['event_id'], row['procedures']) for _, row in surgery_df.iterrows()],
                              ).reset_index().rename(columns={"index": "procedure",
                                                              0: "event_id"})
