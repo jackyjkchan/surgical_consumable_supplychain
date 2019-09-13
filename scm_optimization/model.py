@@ -9,7 +9,7 @@ import time
 class StationaryOptModel:
     def __init__(self, gamma, lead_time, horizon, info_state_rvs,
                  holding_cost, backlogging_cost, setup_cost, unit_price,
-                 max_info_state=None, info_steps=None):
+                 usage_model=None):
 
         # parameters in order:
         # single period discount factor
@@ -21,6 +21,12 @@ class StationaryOptModel:
         self.lead_time = lead_time
         self.horizon = horizon
         self.info_state_rvs = info_state_rvs
+
+        # usage_model = lambda o: pacal.BinomialDistr(o, p=0.5)
+        # usage_model = lambda o: pacal.ConstDistr(o)
+        # usage_model = usage_model=pacal.PoissonDistr
+        default_usage_model = lambda o: pacal.PoissonDistr(o, trunk_eps=1e-3)
+        self.usage_model = usage_model if usage_model else default_usage_model
 
         self.h = holding_cost
         self.b = backlogging_cost
@@ -39,29 +45,28 @@ class StationaryOptModel:
         if len(unknown_lt_info.get_piecewise_pdf().getDiracs()) == 1:
             unknown_lt_info = unknown_lt_info.get_piecewise_pdf().getDiracs()[0].a
             if unknown_lt_info:
-                self.unknown_lt_demand_rv = pacal.PoissonDistr(unknown_lt_info, trunk_eps=1e-3)
+                self.unknown_lt_demand_rv = self.usage_model(unknown_lt_info)
             else:
                 self.unknown_lt_demand_rv = 0
         else:
-            unknown_lt_demand_pdf = sum([dirac.f * pacal.PoissonDistr(dirac.a, trunk_eps=1e-3).get_piecewise_pdf()
-                                        for dirac in unknown_lt_info.get_piecewise_pdf().getDiracs()
-                                        ])
+            unknown_lt_demand_pdf = sum([dirac.f * self.usage_model(dirac.a).get_piecewise_pdf()
+                                         for dirac in unknown_lt_info.get_piecewise_pdf().getDiracs()
+                                         ])
             self.unknown_lt_demand_rv = pacal.DiscreteDistr([dirac.a for dirac in unknown_lt_demand_pdf.getDiracs()],
                                                             [dirac.f for dirac in unknown_lt_demand_pdf.getDiracs()])
 
         if len(self.info_state_rvs[0].get_piecewise_pdf().getDiracs()) == 1:
             val = self.info_state_rvs[0].get_piecewise_pdf().getDiracs()[0].a
             if val:
-                self.unknown_demand_rv = pacal.PoissonDistr(unknown_lt_info, trunk_eps=1e-3)
+                self.unknown_demand_rv = self.usage_model(unknown_lt_info)
             else:
                 self.unknown_demand_rv = 0
         else:
-            unknown_demand_pdf = sum([dirac.f * pacal.PoissonDistr(dirac.a, trunk_eps=1e-3).get_piecewise_pdf()
-                                     for dirac in unknown_lt_info.get_piecewise_pdf().getDiracs()
-                                     ])
+            unknown_demand_pdf = sum([dirac.f * self.usage_model(dirac.a).get_piecewise_pdf()
+                                      for dirac in unknown_lt_info.get_piecewise_pdf().getDiracs()
+                                      ])
             self.unknown_demand_rv = pacal.DiscreteDistr([dirac.a for dirac in unknown_demand_pdf.getDiracs()],
                                                          [dirac.f for dirac in unknown_demand_pdf.getDiracs()])
-
 
     def lambda_t(self, o):
         return o[0] + self.info_state_rvs[-1]
@@ -84,13 +89,6 @@ class StationaryOptModel:
         known_demand_rv = pacal.PoissonDistr(sum(o[0:self.lead_time + 1]), trunk_eps=1e-3) \
             if sum(o[0:self.lead_time + 1]) else pacal.ConstDistr(0)
 
-        # u_lead_time = sum(self.info_state_rvs[i] for j in range(self.lead_time+1) for i in range(j+1))
-        # lambda_lead_time = u_lead_time + sum(o[0:self.lead_time + 1])
-        # demand_pdf = sum([dirac.f * pacal.PoissonDistr(dirac.a).get_piecewise_pdf()
-        #                   for dirac in lambda_lead_time.get_piecewise_pdf().getDiracs()
-        #                   ])
-        # demand_rv = pacal.DiscreteDistr([dirac.a for dirac in demand_pdf.getDiracs()],
-        #                                 [dirac.f for dirac in demand_pdf.getDiracs()])
         lt_demand_rv = known_demand_rv
         if self.unknown_lt_demand_rv:
             lt_demand_rv += self.unknown_lt_demand_rv
@@ -98,8 +96,10 @@ class StationaryOptModel:
 
     # D_t | \Lambda_t in notation
     def current_demand(self, o):
-        return pacal.PoissonDistr(o[0], trunk_eps=1e-3) \
-               + self.unknown_demand_rv
+        if self.unknown_demand_rv:
+            return self.usage_model(o[0]) + self.unknown_demand_rv
+        else:
+            return self.usage_model(o[0])
 
     # expected discounted holding and backlog cost at end of period t + L given action (target inventory position)
     # \tilde{G} in notation
@@ -207,7 +207,7 @@ class StationaryOptModel:
                                                 for p, state in zip(probabilities, new_states)
                                                 )
         end = time.time()
-        #print(end - start)
+        # print(end - start)
         self.value_function_v[(t, y, o)] = value
         return value
 
@@ -218,12 +218,15 @@ if __name__ == "__main__":
     horizon = 2
     info_state_rvs = [pacal.ConstDistr(0),
                       pacal.ConstDistr(0),
-                      pacal.DiscreteDistr([1, 2, 3, 4], [0.25, 0.25, 0.25, 0.25])]
+                      pacal.DiscreteDistr([1, 2, 19, 20], [0.25, 0.25, 0.25, 0.25])]
     holding_cost = 1
     backlogging_cost = 10
     setup_cost = 5
     unit_price = 0
-
+    usage_model = lambda o: pacal.BinomialDistr(int(o), p=0.5)
+    #usage_model = lambda o: pacal.ConstDistr(o)
+    #usage_model = lambda o: pacal.PoissonDistr(o, trunk_eps=1e-3)
+    #sage_model = None
     model = StationaryOptModel(gamma,
                                lead_time,
                                horizon,
@@ -231,9 +234,10 @@ if __name__ == "__main__":
                                holding_cost,
                                backlogging_cost,
                                setup_cost,
-                               unit_price)
+                               unit_price,
+                               usage_model=usage_model)
 
-    #t, x, o = model.state_transition(10, 10, (3, 2))
+    # t, x, o = model.state_transition(10, 10, (3, 2))
 
     s = time.time()
     print(model.j_function(1, 0, (3, 2)))
@@ -252,13 +256,11 @@ if __name__ == "__main__":
     print("run time:", time.time() - s)
     s = time.time()
 
-
-    #print(model.value_function_j)
-    #print(model.value_function_v)
+    # print(model.value_function_j)
+    # print(model.value_function_v)
     # print(model.v_function(0, 3, (3, 2)))
     # print(model.v_function(0, 4, (3, 2)))
     # print(model.v_function(0, 5, (3, 2)))
     # print(model.v_function(0, 6, (3, 2)))
     # print(model.v_function(0, 7, (3, 2)))
     # print(model.v_function(0, 8, (3, 2)))
-

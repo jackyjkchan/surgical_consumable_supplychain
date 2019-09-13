@@ -5,6 +5,7 @@ import plotly.graph_objs as go
 from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
 import itertools
 import pandas as pd
+import datetime
 
 inv_pos_max = 30
 t_max = 15
@@ -23,6 +24,7 @@ rv_4_16 = pacal.DiscreteDistr([4, 16], [0.5, 0.5])
 rv_2_18 = pacal.DiscreteDistr([2, 18], [0.5, 0.5])
 rv_0_20 = pacal.DiscreteDistr([0, 20], [0.5, 0.5])
 
+fn = "batch_mdp_results_usage_model_20190913_01.pickle"
 test_cases = {
     "E[Demand] 10": rv_10_10,
     "E[Demand] 8, 12": rv_8_12,
@@ -31,6 +33,19 @@ test_cases = {
     "E[Demand] 2, 18": rv_2_18,
     "E[Demand] 0, 20": rv_0_20
 }
+# usage_models = {
+#     "Poisson": (lambda o: pacal.PoissonDistr(o, trunk_eps=1e-3), 1),
+#     "Deterministic": (lambda o: pacal.ConstDistr(o), 1)
+# }
+usage_models = {
+    "Binomial p=0.05": (lambda o: pacal.BinomialDistr(int(o), p=0.05), 0.05),
+    "Binomial p=0.2": (lambda o: pacal.BinomialDistr(int(o), p=0.2), 0.2),
+    "Binomial p=0.5": (lambda o: pacal.BinomialDistr(int(o), p=0.5), 0.5),
+    "Binomial p=0.8": (lambda o: pacal.BinomialDistr(int(o), p=0.8), 0.8),
+    "Binomial p=0.95": (lambda o: pacal.BinomialDistr(int(o), p=0.95), 0.95),
+    "Deterministic": (lambda o: pacal.ConstDistr(o), 1)
+}
+
 setup_costs = [0, 5, 20, 50]
 gamma = 0.9
 lead_time = 0
@@ -40,6 +55,7 @@ setup_cost = 5
 unit_price = 0
 
 results = pd.DataFrame(columns=['exogenous_label',
+                                'usage_model',
                                 'info_rv',
                                 'gamma',
                                 'holding_cost',
@@ -54,57 +70,67 @@ results = pd.DataFrame(columns=['exogenous_label',
                                 'j_value_function',
                                 'base_stock',
                                 'order_up_to'])
-for case in test_cases:
-    info_rv = test_cases[case]
-    info_vals = [diracs.a for diracs in info_rv.get_piecewise_pdf().getDiracs()]
-    for setup_cost in setup_costs:
-        for n in range(n_max + 1):
-            print(case, n)
-            if n == 0:
-                info_rv_vector = [info_rv, rv_0]
-                horizon = 1
-                info_states = [(0,)]
-            else:
-                info_rv_vector = [rv_0] * n + [info_rv]
-                horizon = n
-                info_states = [tuple(state) for state in itertools.product(info_vals, repeat=n)]
 
-            model = StationaryOptModel(gamma,
-                                       lead_time,
-                                       horizon,
-                                       info_rv_vector,
-                                       holding_cost,
-                                       backlogging_cost,
-                                       setup_cost,
-                                       unit_price)
+for usage_model_label in usage_models:
+    print(usage_model_label)
+    usage_model, p = usage_models[usage_model_label]
+    scale = int(1.0 / p)
+    for case in test_cases:
+        print("\t", case)
+        info_rv = test_cases[case] * scale
+        info_vals = [diracs.a for diracs in info_rv.get_piecewise_pdf().getDiracs()]
+        for setup_cost in setup_costs:
+            print("\t\tk=", setup_cost)
+            for n in range(n_max + 1):
+                print("\t\t\tn=", n)
+                print(datetime.datetime.now().isoformat())
+                if n == 0:
+                    info_rv_vector = [info_rv, rv_0]
+                    horizon = 1
+                    info_states = [(0,)]
+                else:
+                    info_rv_vector = [rv_0] * n + [info_rv]
+                    horizon = n
+                    info_states = [tuple(state) for state in itertools.product(info_vals, repeat=n)]
 
-            for t in range(t_max + 1):
-                for o in info_states:
-                    for x in range(inv_pos_max + 1):
-                        j_value = model.j_function(t, x, o)
-                        base_stock = model.base_stock_level(t, o)
-                        stock_up = model.stock_up_level(t, o)
+                model = StationaryOptModel(gamma,
+                                           lead_time,
+                                           horizon,
+                                           info_rv_vector,
+                                           holding_cost,
+                                           backlogging_cost,
+                                           setup_cost,
+                                           unit_price,
+                                           usage_model=usage_model)
 
-                        result = {'exogenous_label': case,
-                                  'info_rv': info_rv,
-                                  'gamma': gamma,
-                                  'holding_cost': holding_cost,
-                                  'backlogging_cost': backlogging_cost,
-                                  'setup_cost': setup_cost,
-                                  'unit_price': unit_price,
-                                  'information_horizon': n,
-                                  'lead_time': 0,
-                                  't': t,
-                                  'inventory_position_state': x,
-                                  'information_state': o,
-                                  'j_value_function': j_value,
-                                  'base_stock': base_stock,
-                                  'order_up_to': stock_up
-                                  }
-                        results = results.append(result, ignore_index=True)
+                for t in range(t_max + 1):
+                    print("\t\t\t\tt=", t)
+                    for o in info_states:
+                        for x in range(inv_pos_max + 1):
+                            j_value = model.j_function(t, x, o)
+                            base_stock = model.base_stock_level(t, o)
+                            stock_up = model.stock_up_level(t, o)
+                            result = {'exogenous_label': case,
+                                      'usage_model': usage_model_label,
+                                      'info_rv': info_rv,
+                                      'gamma': gamma,
+                                      'holding_cost': holding_cost,
+                                      'backlogging_cost': backlogging_cost,
+                                      'setup_cost': setup_cost,
+                                      'unit_price': unit_price,
+                                      'information_horizon': n,
+                                      'lead_time': 0,
+                                      't': t,
+                                      'inventory_position_state': x,
+                                      'information_state': o,
+                                      'j_value_function': j_value,
+                                      'base_stock': base_stock,
+                                      'order_up_to': stock_up
+                                      }
+                            results = results.append(result, ignore_index=True)
 
-                    results.to_csv("optimization_model_results.csv")
-                    results.to_pickle("batch_mdp_results_20190824.pickle")
+                        # results.to_csv("optimization_model_results.csv")
+            results.to_pickle(fn)
 
 #     print(x)
 #     j_values.append(model.j_function(t, x, o))
