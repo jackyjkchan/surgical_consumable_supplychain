@@ -14,7 +14,7 @@ from scm_analytics.model.SurgeryUsageRegressionModel import Interaction
 from scm_analytics.model import SurgeryUsageRegressionModel as SURegressionModel
 
 
-def test_usage_r_regression_flow():
+def test_usage_r_regression_flow(save_results=False):
     pd.set_option('display.max_rows', 500)
     pd.set_option('display.max_columns', 500)
     pd.set_option('display.width', 1000)
@@ -141,8 +141,9 @@ def test_usage_r_regression_flow():
     plt.ylabel("Probability Density")
     plt.xlabel("Residual")
     plt.legend()
-    plt.savefig("{0}_surgery_item_usage_residuals.png".format(item_id), format="png")
-    # plt.show()
+    if save_results:
+        plt.savefig("{0}_surgery_item_usage_residuals.png".format(item_id), format="png")
+    plt.show()
 
 
 if __name__ == "__main__":

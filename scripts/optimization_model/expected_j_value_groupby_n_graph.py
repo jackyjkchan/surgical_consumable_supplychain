@@ -13,11 +13,17 @@ def test_case_var(info_states):
     d_rv = pacal.DiscreteDistr([d.a for d in pdf.getDiracs()], [d.f for d in pdf.getDiracs()])
     return d_rv.var()
 
-fn = 'scripts/optimization_model/results/batch_mdp_results_20190805.pickle'
+
+def demand_var(info_rv):
+    pdf = sum([dirac.f*pacal.PoissonDistr(dirac.a).get_piecewise_pdf() for dirac in
+               info_rv.get_piecewise_pdf().getDiracs()])
+    d_rv = pacal.DiscreteDistr([d.a for d in pdf.getDiracs()], [d.f for d in pdf.getDiracs()])
+    return d_rv.var()
+
+
+fn = 'scripts/optimization_model/results/batch_mdp_results_20190825_merged.pickle'
 data = pd.read_pickle(fn)
 traces = []
-
-data0 = data[data["inventory_position_state"] == 0]
 
 test_cases_var = {
     "E[Demand] 5": test_case_var([5]),
@@ -31,14 +37,13 @@ data = data.join(test_cases_var.set_index("label"),
                    how="left",
                    rsuffix="label")
 
-summary = data[data["inventory_position_state"] == 0] \
-    .groupby(["exogenous_label", "information_horizon"]) \
-    .agg({"j_value_function": "mean"})
 
+traces = []
 for label in set(data["exogenous_label"]):
     for k in set(data["setup_cost"]):
         print(label)
-        df = data0[data0["exogenous_label"] == label]
+        df = data[(data["inventory_position_state"] == 0) * (data["t"] == t_max)]
+        df = df[df["exogenous_label"] == label]
         df = df[df['setup_cost'] == k]
         summary = df \
             .groupby(["information_horizon"]) \
@@ -64,20 +69,23 @@ figure = go.Figure(
 )
 plot(figure, filename="Expected_Cost_For_Various_Levels_of_Advanced_Information_Multi_K.html")
 
-
-summary = data[data["inventory_position_state"] == 0] \
-    .groupby(["var", "information_horizon"]) \
+t_max = max(data['t'])
+summary = data[(data["inventory_position_state"] == 0) * (data["t"] == t_max)] \
+    .groupby(["var", "information_horizon", "setup_cost"]) \
     .agg({"j_value_function": "mean"})\
     .reset_index()
 traces = []
 for information_horizon in set(summary["information_horizon"]):
-    df = summary[summary["information_horizon"] == information_horizon]
-    traces.append(go.Scatter(
-        x=df['var'],
-        y=df['j_value_function'],
-        name="info_horizon = {0}".format(information_horizon)
+    for setup_cost in set(summary["setup_cost"]):
+        df = summary[summary["information_horizon"] == information_horizon]
+        df = df[df["setup_cost"] == setup_cost]
+
+        traces.append(go.Scatter(
+            x=df['var'],
+            y=df['j_value_function'],
+            name="info_horizon = {0}, K={1}".format(information_horizon, str(setup_cost))
+            )
         )
-    )
 title = '<br>'.join(
     textwrap.wrap("Expected Optimal Cost, E[J(0, .)], Against Demand Variance at Constant Daily Expected Demand",
                   width=80)
@@ -91,4 +99,4 @@ figure = go.Figure(
     layout=layout
 )
 
-plot(figure, filename="Expected_Cost_Against_Demand_Variance_for_Various_Info_Horizon.html")
+plot(figure, filename="Expected_Cost_Against_Demand_Variance_for_Various_Info_Horizon_and_Setup_Cost.html")
