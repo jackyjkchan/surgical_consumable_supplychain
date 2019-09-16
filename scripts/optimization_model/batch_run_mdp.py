@@ -6,6 +6,7 @@ from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
 import itertools
 import pandas as pd
 import datetime
+import time
 
 inv_pos_max = 30
 t_max = 15
@@ -24,8 +25,10 @@ rv_4_16 = pacal.DiscreteDistr([4, 16], [0.5, 0.5])
 rv_2_18 = pacal.DiscreteDistr([2, 18], [0.5, 0.5])
 rv_0_20 = pacal.DiscreteDistr([0, 20], [0.5, 0.5])
 
-fn = "batch_mdp_results_usage_model_20190913_01.pickle"
-test_cases = {
+rv_8_16 = pacal.DiscreteDistr([8, 16], [0.5, 0.5])
+
+
+test_cases_set_all = {
     "E[Demand] 10": rv_10_10,
     "E[Demand] 8, 12": rv_8_12,
     "E[Demand] 6, 14": rv_6_14,
@@ -33,25 +36,34 @@ test_cases = {
     "E[Demand] 2, 18": rv_2_18,
     "E[Demand] 0, 20": rv_0_20
 }
+
+test_cases_set1 = {
+    "E[Demand] 8, 16": rv_8_16
+}
+
+
 # usage_models = {
 #     "Poisson": (lambda o: pacal.PoissonDistr(o, trunk_eps=1e-3), 1),
 #     "Deterministic": (lambda o: pacal.ConstDistr(o), 1)
 # }
 usage_models = {
-    "Binomial p=0.05": (lambda o: pacal.BinomialDistr(int(o), p=0.05), 0.05),
-    "Binomial p=0.2": (lambda o: pacal.BinomialDistr(int(o), p=0.2), 0.2),
-    "Binomial p=0.5": (lambda o: pacal.BinomialDistr(int(o), p=0.5), 0.5),
-    "Binomial p=0.8": (lambda o: pacal.BinomialDistr(int(o), p=0.8), 0.8),
-    "Binomial p=0.95": (lambda o: pacal.BinomialDistr(int(o), p=0.95), 0.95),
-    "Deterministic": (lambda o: pacal.ConstDistr(o), 1)
+    #"Poisson": (lambda o: pacal.PoissonDistr(o, trunk_eps=1e-3), 1)
+    #"Binomial p=8/32": (lambda o: pacal.BinomialDistr(int(o), p=0.25), 0.25),
+    # "Binomial p=8/16": (lambda o: pacal.BinomialDistr(int(o), p=0.5), 0.5),
+    # "Binomial p=8/13": (lambda o: pacal.BinomialDistr(int(o), p=8/13), 8/13),
+    # "Binomial p=8/11": (lambda o: pacal.BinomialDistr(int(o), p=8/11), 8/11),
+    #"Binomial p=8/9": (lambda o: pacal.BinomialDistr(int(o), p=8/9), 8/9),
+     "Deterministic": (lambda o: pacal.ConstDistr(o), 1)
 }
+test_cases = test_cases_set1
+fn = "batch_mdp_results_usage_model_20190915_02.pickle"
 
 setup_costs = [0, 5, 20, 50]
+setup_costs = [20]
 gamma = 0.9
 lead_time = 0
 holding_cost = 1
 backlogging_cost = 10
-setup_cost = 5
 unit_price = 0
 
 results = pd.DataFrame(columns=['exogenous_label',
@@ -74,10 +86,11 @@ results = pd.DataFrame(columns=['exogenous_label',
 for usage_model_label in usage_models:
     print(usage_model_label)
     usage_model, p = usage_models[usage_model_label]
-    scale = int(1.0 / p)
+    scale = 1.0 / p
     for case in test_cases:
         print("\t", case)
         info_rv = test_cases[case] * scale
+        print("\t", info_rv.get_piecewise_pdf().getDiracs())
         info_vals = [diracs.a for diracs in info_rv.get_piecewise_pdf().getDiracs()]
         for setup_cost in setup_costs:
             print("\t\tk=", setup_cost)
@@ -131,6 +144,7 @@ for usage_model_label in usage_models:
 
                         # results.to_csv("optimization_model_results.csv")
             results.to_pickle(fn)
+            time.sleep(1)
 
 #     print(x)
 #     j_values.append(model.j_function(t, x, o))

@@ -86,7 +86,7 @@ class StationaryOptModel:
     # D_t^L | \Lambda_t in notation
     def lt_demand(self, o):
         s = time.time()
-        known_demand_rv = pacal.PoissonDistr(sum(o[0:self.lead_time + 1]), trunk_eps=1e-3) \
+        known_demand_rv = self.usage_model(sum(o[0:self.lead_time + 1])) \
             if sum(o[0:self.lead_time + 1]) else pacal.ConstDistr(0)
 
         lt_demand_rv = known_demand_rv
