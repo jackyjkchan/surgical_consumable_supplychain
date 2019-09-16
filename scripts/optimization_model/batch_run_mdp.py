@@ -10,7 +10,6 @@ import time
 
 inv_pos_max = 30
 t_max = 15
-n_max = 5
 
 rv_0 = pacal.ConstDistr(0)
 rv_5_5 = pacal.DiscreteDistr([5], [1])
@@ -24,7 +23,6 @@ rv_6_14 = pacal.DiscreteDistr([6, 14], [0.5, 0.5])
 rv_4_16 = pacal.DiscreteDistr([4, 16], [0.5, 0.5])
 rv_2_18 = pacal.DiscreteDistr([2, 18], [0.5, 0.5])
 rv_0_20 = pacal.DiscreteDistr([0, 20], [0.5, 0.5])
-
 rv_8_16 = pacal.DiscreteDistr([8, 16], [0.5, 0.5])
 
 
@@ -46,17 +44,31 @@ test_cases_set1 = {
 #     "Poisson": (lambda o: pacal.PoissonDistr(o, trunk_eps=1e-3), 1),
 #     "Deterministic": (lambda o: pacal.ConstDistr(o), 1)
 # }
+info_horizons = [0, 2, 3]
+info_horizons = [3]
 usage_models = {
     #"Poisson": (lambda o: pacal.PoissonDistr(o, trunk_eps=1e-3), 1)
-    #"Binomial p=8/32": (lambda o: pacal.BinomialDistr(int(o), p=0.25), 0.25),
+    "Binomial p=8/32": (lambda o: pacal.BinomialDistr(int(o), p=0.25), 0.25),
     # "Binomial p=8/16": (lambda o: pacal.BinomialDistr(int(o), p=0.5), 0.5),
     # "Binomial p=8/13": (lambda o: pacal.BinomialDistr(int(o), p=8/13), 8/13),
     # "Binomial p=8/11": (lambda o: pacal.BinomialDistr(int(o), p=8/11), 8/11),
-    #"Binomial p=8/9": (lambda o: pacal.BinomialDistr(int(o), p=8/9), 8/9),
-     "Deterministic": (lambda o: pacal.ConstDistr(o), 1)
+    # "Binomial p=8/10": (lambda o: pacal.BinomialDistr(int(o), p=8/10), 8/10),
+    # "Binomial p=8/9": (lambda o: pacal.BinomialDistr(int(o), p=8/9), 8/9),
+    # "Deterministic": (lambda o: pacal.ConstDistr(o), 1)
 }
+demand_models = {
+    # "Poisson": pacal.PoissonDistr(8, trunk_eps=1e-3),
+    "Binomial p=8/32": pacal.BinomialDistr(32, p=0.25),
+    # "Binomial p=8/16": pacal.BinomialDistr(16, p=0.5),
+    # "Binomial p=8/13": pacal.BinomialDistr(13, p=8/13),
+    # "Binomial p=8/11": pacal.BinomialDistr(11, p=8/11),
+    # "Binomial p=8/10": pacal.BinomialDistr(10, p=8/10),
+    # "Binomial p=8/9": pacal.BinomialDistr(9, p=8/9),
+    # "Deterministic": pacal.ConstDistr(8)
+}
+
 test_cases = test_cases_set1
-fn = "batch_mdp_results_usage_model_20190915_02.pickle"
+fn = "batch_mdp_results_demand_x_usage_variance_20190916_01.pickle"
 
 setup_costs = [0, 5, 20, 50]
 setup_costs = [20]
@@ -83,18 +95,20 @@ results = pd.DataFrame(columns=['exogenous_label',
                                 'base_stock',
                                 'order_up_to'])
 
+print(datetime.datetime.now().isoformat())
+
 for usage_model_label in usage_models:
     print(usage_model_label)
     usage_model, p = usage_models[usage_model_label]
     scale = 1.0 / p
-    for case in test_cases:
+    for case in demand_models:
         print("\t", case)
-        info_rv = test_cases[case] * scale
+        info_rv = demand_models[case] * scale
         print("\t", info_rv.get_piecewise_pdf().getDiracs())
         info_vals = [diracs.a for diracs in info_rv.get_piecewise_pdf().getDiracs()]
         for setup_cost in setup_costs:
             print("\t\tk=", setup_cost)
-            for n in range(n_max + 1):
+            for n in info_horizons:
                 print("\t\t\tn=", n)
                 print(datetime.datetime.now().isoformat())
                 if n == 0:
@@ -144,24 +158,5 @@ for usage_model_label in usage_models:
 
                         # results.to_csv("optimization_model_results.csv")
             results.to_pickle(fn)
-            time.sleep(1)
 
-#     print(x)
-#     j_values.append(model.j_function(t, x, o))
-#
-# traces[case] = go.Scatter(
-#     x=list(range(max_inv_pos)),
-#     y=j_values,
-#     name=case
-# )
-#
-# layout = go.Layout(title="Value Function J",
-#                    xaxis={'title': 'Inventory Position'},
-#                    yaxis={'title': 'Optimal Expected Cost'})
-#
-# figure = go.Figure(
-#     data=[traces[case] for case in traces],
-#     layout=layout
-# )
-#
-# plot(figure, filename="Expected_Cost_Comparison_T={0}.html".format(str(t)))
+print(datetime.datetime.now().isoformat())

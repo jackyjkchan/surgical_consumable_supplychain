@@ -37,7 +37,7 @@ usage_models_p = {
 
 test_cases_usage_var = pd.DataFrame({"label": list(usage_models_p.keys()),
                                      "usage_variance": list(usage_models_p.values())})
-test_cases_usage_var["usage_variance"] = test_cases_usage_var["usage_variance"].apply(lambda p: 8*(1-p))
+test_cases_usage_var["usage_variance"] = test_cases_usage_var["usage_variance"].apply(lambda p: 8 * (1 - p))
 data = data.join(test_cases_usage_var.set_index("label"),
                  on="usage_model",
                  how="left",
@@ -81,23 +81,31 @@ summary = data[(data["inventory_position_state"] == 0) * (data["t"] == t_max)] \
     .agg({"j_value_function": "mean"}) \
     .reset_index()
 traces = []
+
+line_styles = ("solid", "dot", "dash", "dashdot", "longdash", "longdashdot")
+style_index = 0
 for information_horizon in set(summary["information_horizon"]):
     for setup_cost in set(summary["setup_cost"]):
         df = summary[summary["information_horizon"] == information_horizon]
         df = df[df["setup_cost"] == setup_cost]
 
-        traces.append(go.Scatter(
-            x=df['usage_variance'],
-            y=df['j_value_function'],
-            name="info_horizon = {0}, K={1}".format(information_horizon, str(setup_cost))
+        traces.append(
+            go.Scatter(
+                x=df['usage_variance'],
+                y=df['j_value_function'],
+                #name="info_horizon = {0}, K={1}".format(information_horizon, str(setup_cost)),
+                name="info_horizon = {0}".format(information_horizon),
+                line=dict(dash=line_styles[style_index % len(line_styles)])
+            )
         )
-        )
+        style_index += 1
+
 title = '<br>'.join(
     textwrap.wrap("Expected Optimal Cost, E[J(0, .)], Against Usage Variance at Constant Daily Expected Demand",
                   width=80)
 )
 layout = go.Layout(title=title,
-                   xaxis={'title': 'Demand Variance'},
+                   xaxis={'title': 'Usage Variance'},
                    yaxis={'title': 'Optimal Expected Cost'})
 
 figure = go.Figure(
@@ -122,6 +130,10 @@ summary = data[(data["inventory_position_state"] == 0) *
                (data["t"] == t_max) *
                (data["information_horizon"] == 3)]
 summary["expected_demand_state"] = summary.apply(
-    lambda row: (int(o) * info_state_scale[row["usage_model"]] for o in row["information_state"])
+    lambda row: tuple(int(o * info_state_scale[row["usage_model"]]) for o in row["information_state"]), axis=1
 )
-summary.pivot(index='expected_demand_state', columns='order_up_to', values='order_up_to')
+order_up_to_df = summary.pivot(index='expected_demand_state', columns='usage_variance', values='order_up_to')
+base_stock_df = summary.pivot(index='expected_demand_state', columns='usage_variance', values='base_stock')
+
+order_up_to_df.to_csv("order_up_to_df.csv")
+base_stock_df.to_csv("base_stock_df.csv")
