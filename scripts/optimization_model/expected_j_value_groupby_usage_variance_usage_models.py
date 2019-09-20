@@ -125,15 +125,15 @@ info_state_scale = {
     "Binomial p=8/9": 8 / 9,
     "Deterministic": 1
 }
+for n in range(4):
+    summary = data[(data["inventory_position_state"] == 0) *
+                   (data["t"] == t_max) *
+                   (data["information_horizon"] == n)]
+    summary["expected_demand_state"] = summary.apply(
+        lambda row: tuple(int(o * info_state_scale[row["usage_model"]]) for o in row["information_state"]), axis=1
+    )
+    order_up_to_df = summary.pivot(index='expected_demand_state', columns='usage_variance', values='order_up_to')
+    base_stock_df = summary.pivot(index='expected_demand_state', columns='usage_variance', values='base_stock')
 
-summary = data[(data["inventory_position_state"] == 0) *
-               (data["t"] == t_max) *
-               (data["information_horizon"] == 3)]
-summary["expected_demand_state"] = summary.apply(
-    lambda row: tuple(int(o * info_state_scale[row["usage_model"]]) for o in row["information_state"]), axis=1
-)
-order_up_to_df = summary.pivot(index='expected_demand_state', columns='usage_variance', values='order_up_to')
-base_stock_df = summary.pivot(index='expected_demand_state', columns='usage_variance', values='base_stock')
-
-order_up_to_df.to_csv("order_up_to_df.csv")
-base_stock_df.to_csv("base_stock_df.csv")
+    order_up_to_df.to_csv("order_up_to_n={0}.csv".format(str(n)))
+    base_stock_df.to_csv("base_stock_n={0}.csv".format(str(n)))

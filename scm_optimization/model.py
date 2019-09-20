@@ -40,6 +40,8 @@ class StationaryOptModel:
         self.value_function_v = {}
         self.value_function_v_argmin = {}
         self.base_stock_level_cache = {}
+        self.current_demand_cache = {}
+        self.reward_funcion_g_cache = {}
 
         unknown_lt_info = sum(self.info_state_rvs[i] for j in range(self.lead_time + 1) for i in range(j + 1))
         if len(unknown_lt_info.get_piecewise_pdf().getDiracs()) == 1:
@@ -96,10 +98,14 @@ class StationaryOptModel:
 
     # D_t | \Lambda_t in notation
     def current_demand(self, o):
+        if o[0] in self.current_demand_cache:
+            return self.current_demand_cache[o[0]]
         if self.unknown_demand_rv:
-            return self.usage_model(o[0]) + self.unknown_demand_rv
+            current_demand = self.usage_model(o[0]) + self.unknown_demand_rv
         else:
-            return self.usage_model(o[0])
+            current_demand = self.usage_model(o[0])
+        self.current_demand_cache[o[0]] = current_demand
+        return current_demand
 
     # expected discounted holding and backlog cost at end of period t + L given action (target inventory position)
     # \tilde{G} in notation
@@ -113,14 +119,16 @@ class StationaryOptModel:
         return v
 
     def G(self, y, o):
-        return (1 - self.gamma) * self.c * y + self.G_future(y, o)
+        lt_o = sum(o[0:self.lead_time + 1])
+        if (y, lt_o) in self.reward_funcion_g_cache:
+            return self.reward_funcion_g_cache[(y, lt_o)]
+        self.reward_funcion_g_cache[(y, lt_o)] = (1 - self.gamma) * self.c * y + self.G_future(y, o)
+        return self.reward_funcion_g_cache[(y, lt_o)]
 
     # state t is reversed, terminal stage is t=0 and starting stage is t=T
     # returns new state as random variables
     def state_transition(self, t, y, o):
         next_x = y - self.current_demand(o)
-        for i, j in zip(self.info_state_rvs[1:], o[1:] + (0,)):
-            z = i + j
         next_o = [i + j for i, j in zip(self.info_state_rvs[1:], o[1:] + (0,))]
         return t - 1, next_x, next_o
 
@@ -224,9 +232,9 @@ if __name__ == "__main__":
     setup_cost = 5
     unit_price = 0
     usage_model = lambda o: pacal.BinomialDistr(int(o), p=0.5)
-    #usage_model = lambda o: pacal.ConstDistr(o)
-    #usage_model = lambda o: pacal.PoissonDistr(o, trunk_eps=1e-3)
-    #sage_model = None
+    # usage_model = lambda o: pacal.ConstDistr(o)
+    # usage_model = lambda o: pacal.PoissonDistr(o, trunk_eps=1e-3)
+    # sage_model = None
     model = StationaryOptModel(gamma,
                                lead_time,
                                horizon,
