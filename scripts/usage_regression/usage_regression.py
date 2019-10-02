@@ -14,21 +14,21 @@ from scm_analytics.model.SurgeryUsageRegressionModel import Interaction
 from scm_analytics.model import SurgeryUsageRegressionModel as SURegressionModel
 
 
-def test_usage_r_regression_flow(save_results=False):
+def test_usage_r_regression_flow(item_id=None, save_results=False):
     pd.set_option('display.max_rows', 500)
     pd.set_option('display.max_columns', 500)
     pd.set_option('display.width', 1000)
     pd.options.mode.chained_assignment = None
 
     case_service = "Cardiac Surgery"
-    item_id = "129636"
+    item_id = item_id if item_id else "38242"
     pthres = 0.05
-    occ_thres = 5
+    occ_thres = 8
 
     analytics = ScmAnalytics.ScmAnalytics(lhs_config)
     surgery_df = analytics.surgery_df
     usage_df = analytics.usage_df
-    item_ids = ["38242", "129636"]
+    item_ids = [item_id]
 
     surgery_df = surgery_df[surgery_df["case_service"] == case_service]
     usage_df = usage_df[usage_df["case_service"] == case_service]
@@ -147,4 +147,4 @@ def test_usage_r_regression_flow(save_results=False):
 
 
 if __name__ == "__main__":
-    test_usage_r_regression_flow()
+    test_usage_r_regression_flow(item_id="38206", save_results=True)

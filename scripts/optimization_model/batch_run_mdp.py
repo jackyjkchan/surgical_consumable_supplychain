@@ -19,12 +19,16 @@ rv_0_10 = pacal.DiscreteDistr([0, 10], [0.5, 0.5])
 
 rv_10_10 = pacal.DiscreteDistr([10], [1])
 rv_8_12 = pacal.DiscreteDistr([8, 12], [0.5, 0.5])
+
+rv_7_13 = pacal.DiscreteDistr([7, 13], [0.5, 0.5])
 rv_6_14 = pacal.DiscreteDistr([6, 14], [0.5, 0.5])
+rv_5_15 = pacal.DiscreteDistr([5, 15], [0.5, 0.5])
+
 rv_4_16 = pacal.DiscreteDistr([4, 16], [0.5, 0.5])
+
 rv_2_18 = pacal.DiscreteDistr([2, 18], [0.5, 0.5])
 rv_0_20 = pacal.DiscreteDistr([0, 20], [0.5, 0.5])
 rv_8_16 = pacal.DiscreteDistr([8, 16], [0.5, 0.5])
-
 
 test_cases_set_all = {
     "E[Demand] 10": rv_10_10,
@@ -35,20 +39,15 @@ test_cases_set_all = {
     "E[Demand] 0, 20": rv_0_20
 }
 
-test_cases_set1 = {
-    "E[Demand] 8, 16": rv_8_16
-}
-
-
 # usage_models = {
 #     "Poisson": (lambda o: pacal.PoissonDistr(o, trunk_eps=1e-3), 1),
 #     "Deterministic": (lambda o: pacal.ConstDistr(o), 1)
 # }
 info_horizons = [0, 2, 3]
-info_horizons = [3]
+info_horizons = [0, 1, 2, 3, 4]
 usage_models = {
-    #"Poisson": (lambda o: pacal.PoissonDistr(o, trunk_eps=1e-3), 1)
-    "Binomial p=8/32": (lambda o: pacal.BinomialDistr(int(o), p=0.25), 0.25),
+    "Poisson": (lambda o: pacal.PoissonDistr(o, trunk_eps=1e-3), 1)
+    # "Binomial p=8/32": (lambda o: pacal.BinomialDistr(int(o), p=0.25), 0.25),
     # "Binomial p=8/16": (lambda o: pacal.BinomialDistr(int(o), p=0.5), 0.5),
     # "Binomial p=8/13": (lambda o: pacal.BinomialDistr(int(o), p=8/13), 8/13),
     # "Binomial p=8/11": (lambda o: pacal.BinomialDistr(int(o), p=8/11), 8/11),
@@ -57,8 +56,12 @@ usage_models = {
     # "Deterministic": (lambda o: pacal.ConstDistr(o), 1)
 }
 demand_models = {
+    "E[Demand] 7, 13": rv_7_13,
+    "E[Demand] 6, 14": rv_6_14,
+    "E[Demand] 5, 15": rv_5_15
+
     # "Poisson": pacal.PoissonDistr(8, trunk_eps=1e-3),
-    "Binomial p=8/32": pacal.BinomialDistr(32, p=0.25),
+    # "Binomial p=8/32": pacal.BinomialDistr(32, p=0.25),
     # "Binomial p=8/16": pacal.BinomialDistr(16, p=0.5),
     # "Binomial p=8/13": pacal.BinomialDistr(13, p=8/13),
     # "Binomial p=8/11": pacal.BinomialDistr(11, p=8/11),
@@ -67,11 +70,10 @@ demand_models = {
     # "Deterministic": pacal.ConstDistr(8)
 }
 
-test_cases = test_cases_set1
-fn = "batch_mdp_results_demand_x_usage_variance_20190916_01.pickle"
+fn = "batch_mdp_results_non_convex_cases_20191002_01.pickle"
 
 setup_costs = [0, 5, 20, 50]
-setup_costs = [20]
+setup_costs = [50, 75, 100]
 gamma = 0.9
 lead_time = 0
 holding_cost = 1
@@ -157,6 +159,6 @@ for usage_model_label in usage_models:
                             results = results.append(result, ignore_index=True)
 
                         # results.to_csv("optimization_model_results.csv")
-            results.to_pickle(fn)
+                results.to_pickle(fn)
 
 print(datetime.datetime.now().isoformat())

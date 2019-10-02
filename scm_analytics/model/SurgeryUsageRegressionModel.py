@@ -110,7 +110,7 @@ class Interaction(tuple):
         return ".".join(self)
 
 
-def extract_features_data(regression_df, features, all_procedures, interactions=[], other=False, sum_others=True):
+def extract_features_data(regression_df, features, all_procedures, interactions=[], other=False, sum_others=False):
     """
     :param regression_df:
     :param features: list of labels indicating which features to extract
@@ -139,7 +139,6 @@ def extract_features_data(regression_df, features, all_procedures, interactions=
             all_features += ["sum_others"]
 
     if other:
-        excluded = set(all_procedures) - set(features)
         regression_df["other"] = regression_df.apply(lambda row: float(not (bool(sum(row[i] for i in features)))),
                                                      axis=1)
         if sum(regression_df["other"]) > 0:
