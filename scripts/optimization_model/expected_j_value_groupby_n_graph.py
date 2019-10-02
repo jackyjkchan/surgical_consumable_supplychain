@@ -21,7 +21,7 @@ def demand_var(info_rv):
     return d_rv.var()
 
 
-fn = 'scripts/optimization_model/results/batch_mdp_results_20190825_merged.pickle'
+fn = 'scripts/optimization_model/results/batch_mdp_results_non_convex_cases_trunk_10E-5_20191002_merged.pickle'
 data = pd.read_pickle(fn)
 traces = []
 
@@ -29,8 +29,20 @@ test_cases_var = {
     "E[Demand] 5": test_case_var([5]),
     "E[Demand] 3, 7": test_case_var([3, 7]),
     "E[Demand] 1, 9": test_case_var([1, 9]),
-    "E[Demand] 0, 10": test_case_var([0, 10])
+    "E[Demand] 0, 10": test_case_var([0, 10]),
+    "E[Demand] 7, 13": test_case_var([7, 13]),
+    "E[Demand] 6, 14": test_case_var([4, 16]),
+    "E[Demand] 5, 15": test_case_var([5, 15])
+    # "Poisson": pacal.PoissonDistr(8, trunk_eps=1e-3),
+    # "Binomial p=8/32": pacal.BinomialDistr(32, p=0.25),
+    # "Binomial p=8/16": pacal.BinomialDistr(16, p=0.5),
+    # "Binomial p=8/13": pacal.BinomialDistr(13, p=8/13),
+    # "Binomial p=8/11": pacal.BinomialDistr(11, p=8/11),
+    # "Binomial p=8/10": pacal.BinomialDistr(10, p=8/10),
+    # "Binomial p=8/9": pacal.BinomialDistr(9, p=8/9),
+    # "Deterministic": pacal.ConstDistr(8)
 }
+
 test_cases_var = pd.DataFrame({"label": list(test_cases_var.keys()), "var": list(test_cases_var.values())})
 data = data.join(test_cases_var.set_index("label"),
                  on="exogenous_label",
@@ -67,7 +79,7 @@ figure = go.Figure(
     data=traces,
     layout=layout
 )
-plot(figure, filename="Expected_Cost_For_Various_Levels_of_Advanced_Information_Multi_K.html")
+plot(figure, filename="Expected_Cost_For_Various_Levels_of_Advanced_Information_Multi_K_Non_Convex_Search_1e-5_trunk.html")
 
 summary = data[(data["inventory_position_state"] == 0) * (data["t"] == t_max)] \
     .groupby(["var", "information_horizon", "setup_cost"]) \

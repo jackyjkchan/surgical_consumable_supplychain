@@ -9,7 +9,7 @@ import time
 class StationaryOptModel:
     def __init__(self, gamma, lead_time, horizon, info_state_rvs,
                  holding_cost, backlogging_cost, setup_cost, unit_price,
-                 usage_model=None):
+                 usage_model=None, increments=1):
 
         # parameters in order:
         # single period discount factor
@@ -21,6 +21,7 @@ class StationaryOptModel:
         self.lead_time = lead_time
         self.horizon = horizon
         self.info_state_rvs = info_state_rvs
+        self.increments = increments
 
         # usage_model = lambda o: pacal.BinomialDistr(o, p=0.5)
         # usage_model = lambda o: pacal.ConstDistr(o)
@@ -191,13 +192,13 @@ class StationaryOptModel:
         upper = self.v_function(t, 0, o)
         y_min = 0
         v_min = upper
-        y = 1
+        y = self.increments
         while self.v_function(t, y, o) <= v_min + self.k:
             v = self.v_function(t, y, o)
             if v < v_min:
                 y_min = y
                 v_min = v
-            y += 1
+            y += self.increments
 
         self.value_function_v_argmin[(t, o)] = y_min
         return y_min

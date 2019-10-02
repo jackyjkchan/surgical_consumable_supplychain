@@ -56,9 +56,9 @@ usage_models = {
     # "Deterministic": (lambda o: pacal.ConstDistr(o), 1)
 }
 demand_models = {
-    "E[Demand] 7, 13": rv_7_13,
+    #"E[Demand] 7, 13": rv_7_13,
     "E[Demand] 6, 14": rv_6_14,
-    "E[Demand] 5, 15": rv_5_15
+    #"E[Demand] 5, 15": rv_5_15
 
     # "Poisson": pacal.PoissonDistr(8, trunk_eps=1e-3),
     # "Binomial p=8/32": pacal.BinomialDistr(32, p=0.25),
@@ -70,15 +70,16 @@ demand_models = {
     # "Deterministic": pacal.ConstDistr(8)
 }
 
-fn = "batch_mdp_results_non_convex_cases_20191002_01.pickle"
+fn = "batch_mdp_results_non_convex_cases_action_inc_02_20191002_01.pickle"
 
 setup_costs = [0, 5, 20, 50]
-setup_costs = [50, 75, 100]
+setup_costs = [50]
 gamma = 0.9
 lead_time = 0
 holding_cost = 1
 backlogging_cost = 10
 unit_price = 0
+action_inc = 0.2
 
 results = pd.DataFrame(columns=['exogenous_label',
                                 'usage_model',
@@ -95,7 +96,8 @@ results = pd.DataFrame(columns=['exogenous_label',
                                 'information_state',
                                 'j_value_function',
                                 'base_stock',
-                                'order_up_to'])
+                                'order_up_to',
+                                'action_inc'])
 
 print(datetime.datetime.now().isoformat())
 
@@ -130,7 +132,8 @@ for usage_model_label in usage_models:
                                            backlogging_cost,
                                            setup_cost,
                                            unit_price,
-                                           usage_model=usage_model)
+                                           usage_model=usage_model,
+                                           increments=action_inc)
 
                 for t in range(t_max + 1):
                     print("\t\t\t\tt=", t)
@@ -154,7 +157,8 @@ for usage_model_label in usage_models:
                                       'information_state': o,
                                       'j_value_function': j_value,
                                       'base_stock': base_stock,
-                                      'order_up_to': stock_up
+                                      'order_up_to': stock_up,
+                                      'action_inc': action_inc
                                       }
                             results = results.append(result, ignore_index=True)
 
