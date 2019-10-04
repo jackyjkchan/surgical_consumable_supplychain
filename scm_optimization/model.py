@@ -4,12 +4,64 @@ from collections import defaultdict
 import itertools
 import numpy
 import time
+import pandas as pd
+from multiprocessing import Pool
+from datetime import date
+
+RV0 = pacal.ConstDistr(0)
+
+
+class ModelConfig:
+    def __init__(self,
+                 gamma=0.9,
+                 lead_time=0,
+                 info_state_rvs=[pacal.ConstDistr(0), pacal.ConstDistr(0)],
+                 holding_cost=1,
+                 backlogging_cost=10,
+                 setup_cost=0,
+                 unit_price=0,
+                 increments=1,
+                 horizon=None,
+                 info_rv=None,
+                 usage_model=lambda o: pacal.PoissonDistr(o, trunk_eps=1e-3),
+                 label=None,
+                 label_index=None):
+
+        if horizon is not None and info_rv:
+            if horizon == 0:
+                info_state_rvs = [info_rv, RV0]
+            else:
+                info_state_rvs = [RV0] * horizon + [info_rv]
+
+        self.label = label
+        self.sub_label = "{}_{}_{}".format(date.today().isoformat(), label, str(label_index))
+        self.results_fn = self.sub_label + ".pickle"
+
+        self.params = dict(
+            gamma=gamma,
+            lead_time=lead_time,
+            info_state_rvs=info_state_rvs,
+            holding_cost=holding_cost,
+            backlogging_cost=backlogging_cost,
+            setup_cost=setup_cost,
+            unit_price=unit_price,
+            usage_model=usage_model,
+            increments=increments
+        )
 
 
 class StationaryOptModel:
-    def __init__(self, gamma, lead_time, horizon, info_state_rvs,
-                 holding_cost, backlogging_cost, setup_cost, unit_price,
-                 usage_model=None, increments=1):
+    def __init__(self,
+                 gamma,
+                 lead_time,
+                 info_state_rvs,
+                 holding_cost,
+                 backlogging_cost,
+                 setup_cost,
+                 unit_price,
+                 usage_model=None,
+                 increments=1
+                 ):
 
         # parameters in order:
         # single period discount factor
@@ -19,7 +71,6 @@ class StationaryOptModel:
 
         self.gamma = gamma
         self.lead_time = lead_time
-        self.horizon = horizon
         self.info_state_rvs = info_state_rvs
         self.increments = increments
 
@@ -35,7 +86,7 @@ class StationaryOptModel:
         self.c = unit_price
 
         # static list of possible info states
-        # self.info_states = list(range(max_info_state+info_steps))
+        self.info_states_cache = None
 
         self.value_function_j = {}
         self.value_function_v = {}
@@ -70,6 +121,20 @@ class StationaryOptModel:
                                       ])
             self.unknown_demand_rv = pacal.DiscreteDistr([dirac.a for dirac in unknown_demand_pdf.getDiracs()],
                                                          [dirac.f for dirac in unknown_demand_pdf.getDiracs()])
+
+    def info_states(self):
+        if len(self.info_state_rvs) == 1:
+            pass
+        if self.info_states_cache:
+            return self.info_states_cache
+        else:
+            info_vals = [[diracs.a for diracs in rv.get_piecewise_pdf().getDiracs()] for rv in self.info_state_rvs[1:]]
+            info_state_comb = []
+            for i in range(len(self.info_state_rvs) - 1):
+                info_state_comb.append(list(sum(c) for c in itertools.product(*info_vals[i:])))
+            info_states = list(itertools.product(*info_state_comb))
+            self.info_states_cache = info_states
+            return self.info_states_cache
 
     def lambda_t(self, o):
         return o[0] + self.info_state_rvs[-1]
@@ -115,7 +180,6 @@ class StationaryOptModel:
         h_cost = self.h * pacal.max(x, 0).mean()
         b_cost = -self.b * pacal.min(x, 0).mean()
         cost = h_cost + b_cost
-
         v = self.gamma ** self.lead_time * cost
         return v
 
@@ -154,18 +218,13 @@ class StationaryOptModel:
         elif t == -1:
             return 0
         else:
-            # y = self.v_function_argmin(t, o)
-            # j_value = min(self.k + self.v_function(t, y, o), self.v_function(t, x, o)) \
-            #     if y > x else self.v_function(t, x, o)
-            # self.value_function_j[(t, x, o)] = j_value
-
             # Exploit S s structure
             stock_up_lvl = self.stock_up_level(t, o)
             base_stock_lvl = self.base_stock_level(t, o)
             if x <= base_stock_lvl:
-                j_value = self.k + self.v_function(t, stock_up_lvl, o)
+                j_value = self.k + self.v_function(t, float(stock_up_lvl), o)
             else:
-                j_value = self.v_function(t, x, o)
+                j_value = self.v_function(t, float(x), o)
             self.value_function_j[(t, x, o)] = j_value
             return j_value
 
@@ -175,10 +234,9 @@ class StationaryOptModel:
         else:
             stock_up_level = self.stock_up_level(t, o)
             x = stock_up_level
-
             # while do nothing at inv pos x is better than do something, go to lower inv pos.
-            while self.v_function(t, x, o) < self.v_function(t, stock_up_level, o) + self.k:
-                x -= 1
+            while self.v_function(t, float(x), o) < self.v_function(t, float(stock_up_level), o) + self.k:
+                x -= self.increments
             self.base_stock_level_cache[(t, o)] = x
             return x
 
@@ -188,13 +246,12 @@ class StationaryOptModel:
     def v_function_argmin(self, t, o):
         if (t, o) in self.value_function_v_argmin:
             return self.value_function_v_argmin[(t, o)]
-
         upper = self.v_function(t, 0, o)
         y_min = 0
         v_min = upper
         y = self.increments
-        while self.v_function(t, y, o) <= v_min + self.k:
-            v = self.v_function(t, y, o)
+        while self.v_function(t, float(y), o) <= v_min + self.k:
+            v = self.v_function(t, float(y), o)
             if v < v_min:
                 y_min = y
                 v_min = v
@@ -206,19 +263,73 @@ class StationaryOptModel:
     def v_function(self, t, y, o):
         if (t, y, o) in self.value_function_v:
             return self.value_function_v[(t, y, o)]
-
         next_t, next_x, next_o = self.state_transition(t, y, o)
-
         new_states, probabilities = self.unpack_state_transition(next_t, next_x, next_o)
-        start = time.time()
-
         value = self.G(y, o) + self.gamma * sum(p * self.j_function(*state)
-                                                for p, state in zip(probabilities, new_states)
-                                                )
-        end = time.time()
-        # print(end - start)
+                                                for p, state in zip(probabilities, new_states))
         self.value_function_v[(t, y, o)] = value
         return value
+
+
+def run_config(args):
+    config, ts, xs = args
+    results = pd.DataFrame(columns=['label',
+                                    'usage_model',
+                                    'info_rv',
+                                    'gamma',
+                                    'holding_cost',
+                                    'backlogging_cost',
+                                    'setup_cost',
+                                    'unit_price',
+                                    'information_horizon',
+                                    'lead_time',
+                                    't',
+                                    'inventory_position_state',
+                                    'information_state',
+                                    'j_value_function',
+                                    'base_stock',
+                                    'order_up_to',
+                                    'increments'])
+    model = StationaryOptModel(
+        config.params["gamma"],
+        config.params["lead_time"],
+        config.params["info_state_rvs"],
+        config.params["holding_cost"],
+        config.params["backlogging_cost"],
+        config.params["setup_cost"],
+        config.params["unit_price"],
+        increments=config.params["increments"],
+        usage_model=config.params["usage_model"])
+
+    for t in ts:
+        for x in xs:
+            for o in model.info_states():
+                j_value = model.j_function(t, x, o)
+                base_stock = model.base_stock_level(t, o)
+                stock_up = model.stock_up_level(t, o)
+
+                result = dict(config.params)
+                result.update({'label': config.label,
+                               't': t,
+                               'inventory_position_state': x,
+                               'information_state': o,
+                               'j_value_function': j_value,
+                               'base_stock': base_stock,
+                               'order_up_to': stock_up})
+                results = results.append(result, ignore_index=True)
+        results.to_pickle(config.results_fn)
+    print(config.results_fn)
+    print(results)
+    print(results.iloc[-1])
+
+
+def run_configs(configs, ts, xs, pools=4):
+    p = Pool(pools)
+    p.map(run_config, list((config, ts, xs)for config in configs))
+    results = list(pd.read_pickle(config.results_fn) for config in configs)
+    results = pd.concat(results)
+    merged_fn = "{}_{}.pickle".format(date.today().isoformat(), configs[0].label)
+    results.to_pickle(merged_fn)
 
 
 if __name__ == "__main__":

@@ -9,7 +9,7 @@ import datetime
 import time
 
 inv_pos_max = 30
-t_max = 15
+t_max = 0
 
 rv_0 = pacal.ConstDistr(0)
 rv_5_5 = pacal.DiscreteDistr([5], [1])
@@ -45,6 +45,7 @@ test_cases_set_all = {
 # }
 info_horizons = [0, 2, 3]
 info_horizons = [0, 1, 2, 3, 4]
+info_horizons = [1]
 usage_models = {
     "Poisson": (lambda o: pacal.PoissonDistr(o, trunk_eps=1e-3), 1)
     # "Binomial p=8/32": (lambda o: pacal.BinomialDistr(int(o), p=0.25), 0.25),
@@ -70,7 +71,7 @@ demand_models = {
     # "Deterministic": pacal.ConstDistr(8)
 }
 
-fn = "batch_mdp_results_non_convex_cases_action_inc_02_20191002_01.pickle"
+fn = "batch_mdp_results_non_convex_cases_action_inc_v2_20191003_01.pickle"
 
 setup_costs = [0, 5, 20, 50]
 setup_costs = [50]
@@ -79,7 +80,7 @@ lead_time = 0
 holding_cost = 1
 backlogging_cost = 10
 unit_price = 0
-action_inc = 0.2
+action_inc = 0.1
 
 results = pd.DataFrame(columns=['exogenous_label',
                                 'usage_model',
@@ -102,8 +103,7 @@ results = pd.DataFrame(columns=['exogenous_label',
 print(datetime.datetime.now().isoformat())
 
 for usage_model_label in usage_models:
-    print(usage_model_label)
-    usage_model, p = usage_models[usage_model_label]
+    usage_model, p = usage_models["Poisson"]
     scale = 1.0 / p
     for case in demand_models:
         print("\t", case)
