@@ -28,20 +28,26 @@ def poisson_usage(o):
 
 
 for horizon in [0, 1, 2, 3, 4]:
-    for inc in [1, Decimal("0.5"), Decimal("0.2"), Decimal("0.1")]:
-        configs.append(ModelConfig(
-            gamma=0.9,
-            lead_time=0,
-            info_state_rvs=None,
-            holding_cost=1,
-            backlogging_cost=10,
-            setup_cost=50,
-            unit_price=0,
-            usage_model=poisson_usage,
-            increments=inc,
-            horizon=horizon,
-            info_rv=rv_6_14,
-            label="Action_Increment",
-            label_index=i)
-        )
+    for k in [25, 30, 35, 40, 45, 50]:
+        for b in [10, 8, 6, 4, 2]:
+            configs.append(ModelConfig(
+                gamma=0.9,
+                lead_time=0,
+                info_state_rvs=None,
+                holding_cost=1,
+                backlogging_cost=b,
+                setup_cost=k,
+                unit_price=0,
+                usage_model=poisson_usage,
+                increments=1,
+                horizon=horizon,
+                info_rv=rv_6_14,
+                label="Action_Increment",
+                label_index=i)
+            )
         i += 1
+
+if __name__ == "__main__":
+    xs = list(range(0, 30))
+    ts = list(range(0, 16))
+    run_configs(configs, ts, xs, pools=8)
