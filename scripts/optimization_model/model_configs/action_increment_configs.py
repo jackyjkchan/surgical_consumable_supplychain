@@ -27,7 +27,7 @@ def poisson_usage(o):
     return pacal.PoissonDistr(o, trunk_eps=1e-3)
 
 
-for horizon in [0, 1, 2, 3, 4]:
+for horizon in [0, 1, 2]:
     for inc in [1, Decimal("0.5"), Decimal("0.2"), Decimal("0.1")]:
         configs.append(ModelConfig(
             gamma=0.9,
@@ -35,8 +35,8 @@ for horizon in [0, 1, 2, 3, 4]:
             info_state_rvs=None,
             holding_cost=1,
             backlogging_cost=10,
-            setup_cost=0,
-            unit_price=1,
+            setup_cost=50,
+            unit_price=0,
             usage_model=poisson_usage,
             increments=inc,
             horizon=horizon,
@@ -45,6 +45,3 @@ for horizon in [0, 1, 2, 3, 4]:
             label_index=i)
         )
         i += 1
-
-if __name__ == "__main__":
-    run_configs(configs, [0], [0])

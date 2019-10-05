@@ -46,7 +46,8 @@ class ModelConfig:
             setup_cost=setup_cost,
             unit_price=unit_price,
             usage_model=usage_model,
-            increments=increments
+            increments=increments,
+            information_horizon=horizon
         )
 
 
@@ -290,16 +291,15 @@ def run_config(args):
                                     'base_stock',
                                     'order_up_to',
                                     'increments'])
-    model = StationaryOptModel(
-        config.params["gamma"],
-        config.params["lead_time"],
-        config.params["info_state_rvs"],
-        config.params["holding_cost"],
-        config.params["backlogging_cost"],
-        config.params["setup_cost"],
-        config.params["unit_price"],
-        increments=config.params["increments"],
-        usage_model=config.params["usage_model"])
+    model = StationaryOptModel(config.params["gamma"],
+                               config.params["lead_time"],
+                               config.params["info_state_rvs"],
+                               config.params["holding_cost"],
+                               config.params["backlogging_cost"],
+                               config.params["setup_cost"],
+                               config.params["unit_price"],
+                               increments=config.params["increments"],
+                               usage_model=config.params["usage_model"])
 
     for t in ts:
         for x in xs:
@@ -325,7 +325,7 @@ def run_config(args):
 
 def run_configs(configs, ts, xs, pools=4):
     p = Pool(pools)
-    p.map(run_config, list((config, ts, xs)for config in configs))
+    p.map(run_config, list((config, ts, xs) for config in configs))
     results = list(pd.read_pickle(config.results_fn) for config in configs)
     results = pd.concat(results)
     merged_fn = "{}_{}.pickle".format(date.today().isoformat(), configs[0].label)
