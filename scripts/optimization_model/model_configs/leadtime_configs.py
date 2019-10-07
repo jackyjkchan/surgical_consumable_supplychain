@@ -28,21 +28,21 @@ def poisson_usage(o):
 
 
 for horizon in [0, 1, 2, 3, 4]:
-    for k in [25, 30, 35, 40, 45, 50]:
-        for b in [10, 8, 6, 4, 2]:
+    for l in [0, 1, 2, 3]:
+        for b in [10]:
             configs.append(ModelConfig(
                 gamma=0.9,
                 lead_time=0,
                 info_state_rvs=None,
                 holding_cost=1,
                 backlogging_cost=b,
-                setup_cost=k,
+                setup_cost=50,
                 unit_price=0,
                 usage_model=poisson_usage,
                 increments=1,
                 horizon=horizon,
                 info_rv=rv_6_14,
-                label="Non-Convex_Search",
+                label="Leadtime",
                 label_index=i)
             )
         i += 1
