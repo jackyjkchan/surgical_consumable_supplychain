@@ -25,24 +25,27 @@ i = 0
 
 def poisson_usage(o):
     return pacal.PoissonDistr(o, trunk_eps=1e-3)
+usage_models = [PoissonUsageModel(scale=1),
+                BinomUsageModel(n=4, p=0.25),
+                BinomUsageModel(n=2, p=0.5),
+                DeterministUsageModel(1)]
 
-
-for horizon in [0, 1, 2, 3, 4]:
-    for k in [25, 30, 35, 40, 45, 50]:
-        for b in [10, 8, 6, 4, 2]:
+for horizon in [0, 1, 2, 3, 4, 5, 6]:
+    for k in [50, 55, 60]:
+        for u in usage_models:
             configs.append(ModelConfig(
                 gamma=0.9,
                 lead_time=0,
                 info_state_rvs=None,
                 holding_cost=1,
-                backlogging_cost=b,
+                backlogging_cost=10,
                 setup_cost=k,
                 unit_price=0,
-                usage_model=PoissonUsageModel(scale=1),
+                usage_model=u,
                 increments=1,
                 horizon=horizon,
                 info_rv=rv_6_14,
-                label="Non-Convex_Search",
+                label="Non-Convex_Search_Usage_Model",
                 label_index=i)
             )
         i += 1

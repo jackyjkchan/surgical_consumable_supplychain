@@ -6,9 +6,36 @@ import numpy
 import time
 import pandas as pd
 from multiprocessing import Pool
-from datetime import date
+from datetime import date, datetime
 
 RV0 = pacal.ConstDistr(0)
+
+
+class PoissonUsageModel:
+    def __init__(self, scale=1, trunk=1e-3):
+        self.scale = scale
+        self.trunk = trunk
+
+    def usage(self, o):
+        return pacal.PoissonDistr(o*self.scale, trunk_eps=self.trunk)
+
+
+class BinomUsageModel:
+    def __init__(self, n=1, p=0.5):
+        self.n = n
+        self.p = p
+
+    def usage(self, o):
+        return pacal.BinomialDistr(o * self.n, p=self.p)
+
+
+class DeterministUsageModel:
+    def __init__(self, scale=1):
+        self.scale = scale
+
+    def usage(self, o):
+        return pacal.ConstDistr(o*self.scale)
+
 
 
 class ModelConfig:
@@ -23,7 +50,7 @@ class ModelConfig:
                  increments=1,
                  horizon=None,
                  info_rv=None,
-                 usage_model=lambda o: pacal.PoissonDistr(o, trunk_eps=1e-3),
+                 usage_model=PoissonUsageModel(scale=1),
                  label=None,
                  label_index=None):
 
@@ -78,7 +105,7 @@ class StationaryOptModel:
         # usage_model = lambda o: pacal.BinomialDistr(o, p=0.5)
         # usage_model = lambda o: pacal.ConstDistr(o)
         # usage_model = usage_model=pacal.PoissonDistr
-        default_usage_model = lambda o: pacal.PoissonDistr(o, trunk_eps=1e-3)
+        default_usage_model = PoissonUsageModel(scale=1)
         self.usage_model = usage_model if usage_model else default_usage_model
 
         self.h = holding_cost
@@ -100,7 +127,7 @@ class StationaryOptModel:
         if len(unknown_lt_info.get_piecewise_pdf().getDiracs()) == 1:
             unknown_lt_info = unknown_lt_info.get_piecewise_pdf().getDiracs()[0].a
             if unknown_lt_info:
-                self.unknown_lt_demand_rv = self.usage_model(unknown_lt_info)
+                self.unknown_lt_demand_rv = self.usage_model.usage(unknown_lt_info)
             else:
                 self.unknown_lt_demand_rv = 0
         else:
@@ -113,11 +140,11 @@ class StationaryOptModel:
         if len(self.info_state_rvs[0].get_piecewise_pdf().getDiracs()) == 1:
             val = self.info_state_rvs[0].get_piecewise_pdf().getDiracs()[0].a
             if val:
-                self.unknown_demand_rv = self.usage_model(unknown_lt_info)
+                self.unknown_demand_rv = self.usage_model.usage(unknown_lt_info)
             else:
                 self.unknown_demand_rv = 0
         else:
-            unknown_demand_pdf = sum([dirac.f * self.usage_model(dirac.a).get_piecewise_pdf()
+            unknown_demand_pdf = sum([dirac.f * self.usage_model.usage(dirac.a).get_piecewise_pdf()
                                       for dirac in unknown_lt_info.get_piecewise_pdf().getDiracs()
                                       ])
             self.unknown_demand_rv = pacal.DiscreteDistr([dirac.a for dirac in unknown_demand_pdf.getDiracs()],
@@ -155,7 +182,7 @@ class StationaryOptModel:
     # D_t^L | \Lambda_t in notation
     def lt_demand(self, o):
         s = time.time()
-        known_demand_rv = self.usage_model(sum(o[0:self.lead_time + 1])) \
+        known_demand_rv = self.usage_model.usage(sum(o[0:self.lead_time + 1])) \
             if sum(o[0:self.lead_time + 1]) else pacal.ConstDistr(0)
 
         lt_demand_rv = known_demand_rv
@@ -168,9 +195,9 @@ class StationaryOptModel:
         if o[0] in self.current_demand_cache:
             return self.current_demand_cache[o[0]]
         if self.unknown_demand_rv:
-            current_demand = self.usage_model(o[0]) + self.unknown_demand_rv
+            current_demand = self.usage_model.usage(o[0]) + self.unknown_demand_rv
         else:
-            current_demand = self.usage_model(o[0])
+            current_demand = self.usage_model.usage(o[0])
         self.current_demand_cache[o[0]] = current_demand
         return current_demand
 
@@ -300,6 +327,7 @@ def run_config(args):
                                config.params["unit_price"],
                                increments=config.params["increments"],
                                usage_model=config.params["usage_model"])
+    print("Starting {}: {}".format(config.sub_label, datetime.now().isoformat()))
 
     for t in ts:
         for x in xs:
@@ -318,12 +346,11 @@ def run_config(args):
                                'order_up_to': stock_up})
                 results = results.append(result, ignore_index=True)
         results.to_pickle(config.results_fn)
-    print(config.results_fn)
-    print(results)
-    print(results.iloc[-1])
+    print("Finished {}: {}".format(config.sub_label, datetime.now().isoformat()))
 
 
 def run_configs(configs, ts, xs, pools=4):
+    print("Starting {} Runs: {}".format(str(len(configs)), datetime.now().isoformat()))
     p = Pool(pools)
     p.map(run_config, list((config, ts, xs) for config in configs))
     results = list(pd.read_pickle(config.results_fn) for config in configs)
@@ -343,7 +370,7 @@ if __name__ == "__main__":
     backlogging_cost = 10
     setup_cost = 5
     unit_price = 0
-    usage_model = lambda o: pacal.BinomialDistr(int(o), p=0.5)
+    usage_model = PoissonUsageModel(scale=1)
     # usage_model = lambda o: pacal.ConstDistr(o)
     # usage_model = lambda o: pacal.PoissonDistr(o, trunk_eps=1e-3)
     # sage_model = None

@@ -24,6 +24,7 @@ def test_usage_r_regression_flow(item_id=None, save_results=False):
     item_id = item_id if item_id else "38242"
     pthres = 0.05
     occ_thres = 8
+    tail_trim = 0.02
 
     analytics = ScmAnalytics.ScmAnalytics(lhs_config)
     surgery_df = analytics.surgery_df
@@ -32,6 +33,19 @@ def test_usage_r_regression_flow(item_id=None, save_results=False):
 
     surgery_df = surgery_df[surgery_df["case_service"] == case_service]
     usage_df = usage_df[usage_df["case_service"] == case_service]
+
+    if tail_trim:
+        usage_df = usage_df[usage_df["item_id"] == item_id]
+        trim_index = int(len(usage_df)*(1-tail_trim))
+        expected_usage = np.mean(usage_df["used_qty"])
+        max_usage = max(usage_df["used_qty"])
+
+        trim_thres = usage_df.sort_values(by=["used_qty"])["used_qty"].iloc[trim_index]
+        print("Mean Usage Given > 0:", expected_usage)
+        print("Max Usage:", max_usage)
+        print("Trim Threshold:", trim_thres)
+        usage_df = usage_df[usage_df["used_qty"] <= trim_thres]
+
     surgery_df = surgery_df[surgery_df["event_id"].isin(set(usage_df["event_id"]))]
     surgery_df["procedures"] = surgery_df["procedures"].apply(lambda x: set(e.replace(" ", "_") for e in x))
 
