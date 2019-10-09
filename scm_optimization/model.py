@@ -26,7 +26,7 @@ class BinomUsageModel:
         self.p = p
 
     def usage(self, o):
-        return pacal.BinomialDistr(o * self.n, p=self.p)
+        return pacal.BinomialDistr(int(o * self.n), p=self.p)
 
 
 class DeterministUsageModel:
@@ -131,7 +131,7 @@ class StationaryOptModel:
             else:
                 self.unknown_lt_demand_rv = 0
         else:
-            unknown_lt_demand_pdf = sum([dirac.f * self.usage_model(dirac.a).get_piecewise_pdf()
+            unknown_lt_demand_pdf = sum([dirac.f * self.usage_model.usage(dirac.a).get_piecewise_pdf()
                                          for dirac in unknown_lt_info.get_piecewise_pdf().getDiracs()
                                          ])
             self.unknown_lt_demand_rv = pacal.DiscreteDistr([dirac.a for dirac in unknown_lt_demand_pdf.getDiracs()],
