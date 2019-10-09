@@ -19,7 +19,7 @@ class UsageModel:
             return False
 
     def __eq__(self, other):
-        if self.a == other.a:
+        if self.name == other.name:
             return True
         else:
             return False
