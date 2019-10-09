@@ -2,3 +2,4 @@ src_data
 .idea
 *.pyc
 *.pyo
+scripts/optimization_model/results
