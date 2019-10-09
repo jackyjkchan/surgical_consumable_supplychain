@@ -11,8 +11,23 @@ from datetime import date, datetime
 RV0 = pacal.ConstDistr(0)
 
 
-class PoissonUsageModel:
+class UsageModel:
+    def __lt__(self, other):
+        if self.name < other.name:
+            return True
+        else:
+            return False
+
+    def __eq__(self, other):
+        if self.a == other.a:
+            return True
+        else:
+            return False
+
+
+class PoissonUsageModel(UsageModel):
     def __init__(self, scale=1, trunk=1e-3):
+        self.name = "Poisson {} {}".format(str(scale), str(trunk))
         self.scale = scale
         self.trunk = trunk
 
@@ -20,8 +35,9 @@ class PoissonUsageModel:
         return pacal.PoissonDistr(o*self.scale, trunk_eps=self.trunk)
 
 
-class BinomUsageModel:
+class BinomUsageModel(UsageModel):
     def __init__(self, n=1, p=0.5):
+        self.name = "Binom {} {}".format(str(n), str(p))
         self.n = n
         self.p = p
 
@@ -29,13 +45,13 @@ class BinomUsageModel:
         return pacal.BinomialDistr(int(o * self.n), p=self.p)
 
 
-class DeterministUsageModel:
+class DeterministUsageModel(UsageModel):
     def __init__(self, scale=1):
+        self.name = "Const {}".format(str(scale))
         self.scale = scale
 
     def usage(self, o):
         return pacal.ConstDistr(o*self.scale)
-
 
 
 class ModelConfig:

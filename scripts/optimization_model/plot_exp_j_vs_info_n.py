@@ -11,14 +11,14 @@ from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
 from scripts.optimization_model.model_configs import action_increment_configs
 from scripts.optimization_model.model_configs.leadtime_configs import poisson_usage
 
-data = pd.read_pickle("scripts/optimization_model/results/2019-10-06_Leadtime.pickle")
+data = pd.read_pickle("scripts/optimization_model/results/2019-10-08_Non-Convex_Search_Usage_Model.pickle")
 x = 0
 t = max(data["t"])
 
 C0 = pacal.ConstDistr(0)
 groupbys = ['label', 'usage_model', 'gamma', 'holding_cost',
             'backlogging_cost', 'setup_cost', 'unit_price', 'information_horizon',
-            'lead_time', 'increments']
+            'lead_time', 'increments', ""]
 
 data["information_horizon"] = data["info_state_rvs"].apply(lambda x:
                                                            len(x) - 1 if len(x) > 2 else 1 if x[1].mean() else 0
