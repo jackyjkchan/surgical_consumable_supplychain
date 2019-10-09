@@ -19,7 +19,7 @@ t = max(data["t"])
 C0 = pacal.ConstDistr(0)
 groupbys = ['label', 'usage_model', 'gamma', 'holding_cost',
             'backlogging_cost', 'setup_cost', 'unit_price', 'information_horizon',
-            'lead_time', 'increments', ""]
+            'lead_time', 'increments']
 
 data["information_horizon"] = data["info_state_rvs"].apply(lambda x:
                                                            len(x) - 1 if len(x) > 2 else 1 if x[1].mean() else 0

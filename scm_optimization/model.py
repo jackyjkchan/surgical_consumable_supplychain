@@ -27,6 +27,9 @@ class UsageModel:
     def __hash__(self):
         return hash(self.name)
 
+    def __str__(self):
+        return self.name
+
 
 class PoissonUsageModel(UsageModel):
     def __init__(self, scale=1, trunk=1e-3):
