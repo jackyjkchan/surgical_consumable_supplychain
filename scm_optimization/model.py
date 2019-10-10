@@ -5,6 +5,8 @@ import itertools
 import numpy
 import time
 import pandas as pd
+import pickle
+
 from multiprocessing import Pool
 from datetime import date, datetime
 
@@ -105,6 +107,13 @@ class ModelConfig:
 
 
 class StationaryOptModel:
+
+    @classmethod
+    def read_pickle(cls, filename):
+        with open(filename, "rb"):
+            m = pickle.load(filename)
+        return m
+
     def __init__(self,
                  gamma,
                  lead_time,
@@ -324,6 +333,10 @@ class StationaryOptModel:
         self.value_function_v[(t, y, o)] = value
         return value
 
+    def to_pickle(self, filename):
+        with open(filename+"_model.pickle", "wb") as f:
+            pickle.dump(self, f)
+
 
 def run_config(args):
     config, ts, xs = args
@@ -373,6 +386,7 @@ def run_config(args):
                 results = results.append(result, ignore_index=True)
         results.to_pickle(config.results_fn)
     print("Finished {}: {}".format(config.sub_label, datetime.now().isoformat()))
+    model.to_pickle(config.results_fn)
 
 
 def run_configs(configs, ts, xs, pools=4):
