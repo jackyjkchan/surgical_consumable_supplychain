@@ -1,4 +1,4 @@
-from scm_optimization.model import ModelConfig, run_configs
+from scm_optimization.model import ModelConfig, run_configs, DeterministUsageModel, BinomUsageModel, PoissonUsageModel
 import pacal
 from decimal import *
 
@@ -22,32 +22,28 @@ rv_8_16 = pacal.DiscreteDistr([8, 16], [0.5, 0.5])
 configs = []
 i = 0
 
-
-def poisson_usage(o):
-    return pacal.PoissonDistr(o, trunk_eps=1e-3)
-
-
-for horizon in [0, 1, 2, 3, 4]:
+for horizon in [0, 1, 2, 3, 4, 5, 6, 7, 8]:
     for l in [0, 1, 2, 3]:
         for b in [10]:
+            i += 1
             configs.append(ModelConfig(
                 gamma=0.9,
-                lead_time=0,
+                lead_time=l,
                 info_state_rvs=None,
                 holding_cost=1,
                 backlogging_cost=b,
                 setup_cost=50,
                 unit_price=0,
-                usage_model=poisson_usage,
+                usage_model=DeterministUsageModel(scale=1),
                 increments=1,
                 horizon=horizon,
                 info_rv=rv_6_14,
                 label="Leadtime",
                 label_index=i)
             )
-        i += 1
+
 
 if __name__ == "__main__":
-    xs = list(range(0, 30))
+    xs = list(range(0, 1))
     ts = list(range(0, 16))
     run_configs(configs, ts, xs, pools=8)
