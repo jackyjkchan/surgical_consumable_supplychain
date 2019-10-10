@@ -11,6 +11,10 @@ from datetime import date, datetime
 RV0 = pacal.ConstDistr(0)
 
 
+def rv_str(rv):
+    return str(rv)[0:str(rv).find("#")]
+
+
 class UsageModel:
     def __lt__(self, other):
         if self.name < other.name:

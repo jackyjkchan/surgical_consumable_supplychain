@@ -12,6 +12,7 @@ from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
 from scripts.optimization_model.model_configs import action_increment_configs
 from scripts.optimization_model.model_configs.leadtime_configs import poisson_usage
 
+normalize = True
 data = pd.read_pickle("scripts/optimization_model/results/2019-10-08_Non-Convex_Search_Usage_Model.pickle")
 x = 0
 t = max(data["t"])
@@ -40,7 +41,7 @@ for field in groupbys:
     else:
         diff_fields.append(field)
 diff_fields.remove("information_horizon")
-diff_values = [set(summary[field]) for field in diff_fields]
+diff_values = [sorted(set(summary[field])) for field in diff_fields]
 combinations = list(itertools.product(*diff_values))
 
 traces = []
@@ -51,7 +52,7 @@ for comb in combinations:
     label = "_".join(["{}={}".format(field, str(val)) for field, val in zip(diff_fields, comb)])
     traces.append(go.Scatter(
         x=d["information_horizon"],
-        y=d['j_value_function'],
+        y=d['j_value_function'] / max(d['j_value_function']) if normalize else d['j_value_function'],
         name=label
     ))
 
