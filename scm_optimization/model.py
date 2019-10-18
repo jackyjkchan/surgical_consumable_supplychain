@@ -1,6 +1,6 @@
 import math
+import os
 import pacal
-from collections import defaultdict
 import itertools
 import numpy
 import time
@@ -44,7 +44,7 @@ class PoissonUsageModel(UsageModel):
         self.trunk = trunk
 
     def usage(self, o):
-        return pacal.PoissonDistr(o*self.scale, trunk_eps=self.trunk)
+        return pacal.PoissonDistr(o * self.scale, trunk_eps=self.trunk)
 
 
 class BinomUsageModel(UsageModel):
@@ -63,7 +63,7 @@ class DeterministUsageModel(UsageModel):
         self.scale = scale
 
     def usage(self, o):
-        return pacal.ConstDistr(o*self.scale)
+        return pacal.ConstDistr(o * self.scale)
 
 
 class ModelConfig:
@@ -110,8 +110,8 @@ class StationaryOptModel:
 
     @classmethod
     def read_pickle(cls, filename):
-        with open(filename, "rb"):
-            m = pickle.load(filename)
+        with open(filename, "rb") as f:
+            m = pickle.load(f)
         return m
 
     def __init__(self,
@@ -151,12 +151,32 @@ class StationaryOptModel:
         # static list of possible info states
         self.info_states_cache = None
 
+        # all caches
         self.value_function_j = {}
+        self.j_h = {}
+        self.j_b = {}
+        self.j_k = {}
+        self.j_p = {}
+
         self.value_function_v = {}
+        self.v_h = {}
+        self.v_b = {}
+        self.v_k = {}
+        self.v_p = {}
+
         self.value_function_v_argmin = {}
         self.base_stock_level_cache = {}
         self.current_demand_cache = {}
+
         self.reward_funcion_g_cache = {}
+        self.g_h = {}
+        self.g_b = {}
+        self.g_p = {}
+
+        ### Apppend Const(0) to info_state_rvs if leadtime > info_horizon
+        if len(self.info_state_rvs) < self.lead_time + 1:
+            diff = self.lead_time - len(self.info_state_rvs) + 1
+            self.info_state_rvs = self.info_state_rvs + diff * [pacal.ConstDistr(0)]
 
         unknown_lt_info = sum(self.info_state_rvs[i] for j in range(self.lead_time + 1) for i in range(j + 1))
         if len(unknown_lt_info.get_piecewise_pdf().getDiracs()) == 1:
@@ -215,10 +235,10 @@ class StationaryOptModel:
     #     return self.observed_lt_info(o) + self.unobserved_lt_info(o)
 
     # D_t^L | \Lambda_t in notation
-    def lt_demand(self, o):
+    def lt_demand(self, lt_o):
         s = time.time()
-        known_demand_rv = self.usage_model.usage(sum(o[0:self.lead_time + 1])) \
-            if sum(o[0:self.lead_time + 1]) else pacal.ConstDistr(0)
+        known_demand_rv = self.usage_model.usage(lt_o) \
+            if lt_o else pacal.ConstDistr(0)
 
         lt_demand_rv = known_demand_rv
         if self.unknown_lt_demand_rv:
@@ -238,19 +258,39 @@ class StationaryOptModel:
 
     # expected discounted holding and backlog cost at end of period t + L given action (target inventory position)
     # \tilde{G} in notation
-    def G_future(self, y, o):
-        x = y - self.lt_demand(o)
+    def G_future(self, y, lt_o):
+        x = y - self.lt_demand(lt_o)
         h_cost = self.h * pacal.max(x, 0).mean()
         b_cost = -self.b * pacal.min(x, 0).mean()
         cost = h_cost + b_cost
         v = self.gamma ** self.lead_time * cost
+
+        self.g_b[(y, lt_o)] = self.gamma ** self.lead_time * b_cost
+        self.g_h[(y, lt_o)] = self.gamma ** self.lead_time * h_cost
         return v
+
+    def G_b(self, y, o):
+        self.G(y, o)
+        lt_o = sum(o[0:self.lead_time + 1])
+        return self.g_b[(y, lt_o)]
+
+    def G_h(self, y, o):
+        self.G(y, o)
+        lt_o = sum(o[0:self.lead_time + 1])
+        return self.g_h[(y, lt_o)]
+
+    def G_p(self, y, o):
+        self.G(y, o)
+        lt_o = sum(o[0:self.lead_time + 1])
+        return self.g_p[(y, lt_o)]
 
     def G(self, y, o):
         lt_o = sum(o[0:self.lead_time + 1])
         if (y, lt_o) in self.reward_funcion_g_cache:
             return self.reward_funcion_g_cache[(y, lt_o)]
-        self.reward_funcion_g_cache[(y, lt_o)] = (1 - self.gamma) * self.c * y + self.G_future(y, o)
+
+        self.reward_funcion_g_cache[(y, lt_o)] = (1 - self.gamma) * self.c * y + self.G_future(y, lt_o)
+        self.g_p[(y, lt_o)] = (1 - self.gamma) * self.c * y
         return self.reward_funcion_g_cache[(y, lt_o)]
 
     # state t is reversed, terminal stage is t=0 and starting stage is t=T
@@ -275,6 +315,22 @@ class StationaryOptModel:
                 probabilities.append(p)
         return states, probabilities
 
+    def j_function_b(self, t, x, o):
+        self.j_function(t, x, o)
+        return 0 if t == -1 else self.j_b[(t, x, o)]
+
+    def j_function_h(self, t, x, o):
+        self.j_function(t, x, o)
+        return 0 if t == -1 else self.j_h[(t, x, o)]
+
+    def j_function_p(self, t, x, o):
+        self.j_function(t, x, o)
+        return 0 if t == -1 else self.j_p[(t, x, o)]
+
+    def j_function_k(self, t, x, o):
+        self.j_function(t, x, o)
+        return 0 if t == -1 else self.j_k[(t, x, o)]
+
     def j_function(self, t, x, o):
         if (t, x, o) in self.value_function_j:
             return self.value_function_j[(t, x, o)]
@@ -282,13 +338,22 @@ class StationaryOptModel:
             return 0
         else:
             # Exploit S s structure
-            stock_up_lvl = self.stock_up_level(t, o)
-            base_stock_lvl = self.base_stock_level(t, o)
-            if x <= base_stock_lvl:
-                j_value = self.k + self.v_function(t, float(stock_up_lvl), o)
-            else:
-                j_value = self.v_function(t, float(x), o)
+            stock_up_lvl, base_stock_lvl = self.stock_up_level(t, o), self.base_stock_level(t, o)
+            y = stock_up_lvl if x <= base_stock_lvl else x
+            k = self.k if x <= base_stock_lvl else 0
+            j_value = k + self.v_function(t, y, o)
+
+            j_b = self.v_b[(t, y, o)]
+            j_h = self.v_h[(t, y, o)]
+            j_p = self.v_p[(t, y, o)]
+            j_k = k + self.v_k[(t, y, o)]
+
             self.value_function_j[(t, x, o)] = j_value
+            self.j_b[(t, x, o)] = j_b
+            self.j_h[(t, x, o)] = j_h
+            self.j_p[(t, x, o)] = j_p
+            self.j_k[(t, x, o)] = j_k
+
             return j_value
 
     def base_stock_level(self, t, o):
@@ -330,11 +395,20 @@ class StationaryOptModel:
         new_states, probabilities = self.unpack_state_transition(next_t, next_x, next_o)
         value = self.G(y, o) + self.gamma * sum(p * self.j_function(*state)
                                                 for p, state in zip(probabilities, new_states))
+
+        self.v_b[(t, y, o)] = self.G_b(y, o) + self.gamma * sum(p * self.j_function_b(*state)
+                                                                for p, state in zip(probabilities, new_states))
+        self.v_h[(t, y, o)] = self.G_h(y, o) + self.gamma * sum(p * self.j_function_h(*state)
+                                                                for p, state in zip(probabilities, new_states))
+        self.v_p[(t, y, o)] = self.G_p(y, o) + self.gamma * sum(p * self.j_function_p(*state)
+                                                                for p, state in zip(probabilities, new_states))
+        self.v_k[(t, y, o)] = self.gamma * sum(p * self.j_function_k(*state)
+                                               for p, state in zip(probabilities, new_states))
         self.value_function_v[(t, y, o)] = value
         return value
 
     def to_pickle(self, filename):
-        with open(filename+"_model.pickle", "wb") as f:
+        with open(filename + "_model.pickle", "wb") as f:
             pickle.dump(self, f)
 
 
@@ -372,6 +446,10 @@ def run_config(args):
         for x in xs:
             for o in model.info_states():
                 j_value = model.j_function(t, x, o)
+                j_k = model.j_function_k(t, x, o)
+                j_b = model.j_function_b(t, x, o)
+                j_h = model.j_function_h(t, x, o)
+                j_p = model.j_function_p(t, x, o)
                 base_stock = model.base_stock_level(t, o)
                 stock_up = model.stock_up_level(t, o)
 
@@ -381,12 +459,19 @@ def run_config(args):
                                'inventory_position_state': x,
                                'information_state': o,
                                'j_value_function': j_value,
+                               'j_k': j_k,
+                               'j_b': j_b,
+                               'j_h': j_h,
+                               'j_p': j_p,
                                'base_stock': base_stock,
                                'order_up_to': stock_up})
                 results = results.append(result, ignore_index=True)
         results.to_pickle(config.results_fn)
     print("Finished {}: {}".format(config.sub_label, datetime.now().isoformat()))
-    model.to_pickle(config.results_fn)
+    if not os.path.exists("{}_{}".format(date.today().isoformat(), config.label)):
+        os.mkdir("{}_{}".format(date.today().isoformat(), config.label))
+    model.to_pickle("{}_{}/{}".format(date.today().isoformat(), config.label, config.sub_label))
+
 
 
 def run_configs(configs, ts, xs, pools=4):
@@ -397,6 +482,8 @@ def run_configs(configs, ts, xs, pools=4):
     results = pd.concat(results)
     merged_fn = "{}_{}.pickle".format(date.today().isoformat(), configs[0].label)
     results.to_pickle(merged_fn)
+    for config in configs:
+        os.remove(config.results_fn)
 
 
 if __name__ == "__main__":

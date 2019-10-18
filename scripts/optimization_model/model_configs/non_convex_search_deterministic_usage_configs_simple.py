@@ -47,4 +47,4 @@ for info_rv in [rv_6_14]:
 if __name__ == "__main__":
     xs = list(range(0, 1))
     ts = list(range(0, 30))
-    run_configs(configs, ts, xs, pools=8)
+    run_configs(configs, ts, xs, pools=1)

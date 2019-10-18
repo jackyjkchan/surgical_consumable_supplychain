@@ -17,7 +17,7 @@ from scm_analytics.config import lhs_config
 import datetime
 
 case_service = "Cardiac Surgery"
-item_id = "38242"
+item_id = "21920"
 
 analytics = ScmAnalytics.ScmAnalytics(lhs_config)
 
@@ -150,7 +150,7 @@ empirical_surgeries_df["expected_usage"] = empirical_surgeries_df["feature_vecto
     .apply(lambda x: np.exp(np.dot(x, coeff)))
 
 """
-Plotly histogram for 
+Plotly histogram for per surgery info rv, empirical surgeries and synthetic using regression results 
 """
 s = 0
 e = int(max(max(empirical_surgeries_df["expected_usage"]), max(synthetic_surgeries_df["expected_usage"]))+1)
@@ -184,3 +184,40 @@ figure = go.Figure(
         layout=layout
     )
 plot(figure, filename="{0}_Per_Surgery_Info_Rv.html".format(item_id))
+
+"""
+Plotly histogram for per weekday elective surgery RV
+"""
+empirical_rv_df = empirical_surgeries_df.groupby(["expected_usage"])\
+    .agg({"event_id": "count"})\
+    .rename(columns={"event_id": "count"})\
+    .reset_index()
+empirical_rv_df["p"] = empirical_rv_df["count"] / sum(empirical_rv_df["count"])
+emp_surgery_rv = pacal.DiscreteDistr(empirical_rv_df["expected_usage"],
+                                     empirical_rv_df["p"])
+surgery_demand_rv = pacal.BinomialDistr(n, p)
+days = 100000
+
+samples = [sum(emp_surgery_rv.rand(x)) for x in np.random.binomial(n, p, days)]
+increment = 0.5
+
+samples = [round(sample / increment) * increment for sample in samples]
+weekday_elective_trace = go.Histogram(
+            x=samples,
+            name='Weekday Elective Info RV (mean={:0.2f})'.format(np.mean(samples)),
+            xbins=dict(
+                start=0,
+                end=max(samples),
+                size=0.5
+            ),
+            histnorm='probability',
+            opacity=0.75
+        )
+layout = go.Layout(title="Weekday Elective Info R.V Item: {0}".format(item_id),
+                   xaxis={'title': 'Info State (Poisson Usage)]'},
+                   yaxis={'title': 'Probability'})
+figure = go.Figure(
+        data=[weekday_elective_trace],
+        layout=layout
+    )
+plot(figure, filename="{0}_Weekday_Elective_Info_Rv.html".format(item_id))

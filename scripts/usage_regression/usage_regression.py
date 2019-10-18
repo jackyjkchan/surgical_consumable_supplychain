@@ -4,9 +4,8 @@ from itertools import combinations
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.stats as stats
-import plotly.plotly as py
 import plotly.graph_objs as go
-from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
+from plotly.offline import plot
 
 from scm_analytics import ScmAnalytics
 from scm_analytics.config import lhs_config
@@ -24,7 +23,7 @@ def test_usage_r_regression_flow(item_id=None, save_results=False):
     item_id = item_id if item_id else "38242"
     pthres = 0.05
     occ_thres = 8
-    tail_trim = 0.02
+    tail_trim = 0.01
 
     analytics = ScmAnalytics.ScmAnalytics(lhs_config)
     surgery_df = analytics.surgery_df
@@ -147,7 +146,7 @@ def test_usage_r_regression_flow(item_id=None, save_results=False):
         data=traces,
         layout=layout
     )
-    plot(figure, filename="{0}_residuals.html".format(item_id))
+    plot(figure, filename="{0}_residuals_r2_{1:0.2f}.html".format(item_id, r2))
 
     plt.hist(residuals, bins=bins, density=True, rwidth=0.96, alpha=0.5, label="Residuals 'fit - empirical'")
     plt.plot(norm_x, stats.norm.pdf(norm_x, mu, std), label="mu={0:.5f}, sigma={1:.2f}".format(mu, std))
@@ -156,9 +155,9 @@ def test_usage_r_regression_flow(item_id=None, save_results=False):
     plt.xlabel("Residual")
     plt.legend()
     if save_results:
-        plt.savefig("{0}_surgery_item_usage_residuals.png".format(item_id), format="png")
+        plt.savefig("{0}_surgery_item_usage_residuals_r2_{1:0.2f}.png".format(item_id, r2), format="png")
     plt.show()
 
 
 if __name__ == "__main__":
-    test_usage_r_regression_flow(item_id="38206", save_results=True)
+    test_usage_r_regression_flow(item_id="21920", save_results=True)
