@@ -38,7 +38,7 @@ for info_rv in [rv_7_13, rv_6_14, rv_5_15]:
                     usage_model=DeterministUsageModel(scale=1),
                     increments=1,
                     horizon=horizon,
-                    info_rv=rv_6_14,
+                    info_rv=info_rv,
                     label="Non-Convex_Search_Det_Usage",
                     label_index=i)
                 )

@@ -96,6 +96,8 @@ class ModelConfig:
             gamma=gamma,
             lead_time=lead_time,
             info_state_rvs=info_state_rvs,
+            info_rv=info_rv,
+            info_rv_str=rv_str(info_rv) if info_rv else None,
             holding_cost=holding_cost,
             backlogging_cost=backlogging_cost,
             setup_cost=setup_cost,
@@ -471,7 +473,6 @@ def run_config(args):
     if not os.path.exists("{}_{}".format(date.today().isoformat(), config.label)):
         os.mkdir("{}_{}".format(date.today().isoformat(), config.label))
     model.to_pickle("{}_{}/{}".format(date.today().isoformat(), config.label, config.sub_label))
-
 
 
 def run_configs(configs, ts, xs, pools=4):

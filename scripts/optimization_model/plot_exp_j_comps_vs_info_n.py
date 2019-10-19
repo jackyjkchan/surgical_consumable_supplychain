@@ -11,9 +11,10 @@ from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
 from scripts.optimization_model.model_configs import action_increment_configs
 
 normalize = False
-data = pd.read_pickle("scripts/optimization_model/results/2019-10-18_Non_Convex_Search_Det_Usage_Simple.pickle")
+data = pd.read_pickle("scripts/optimization_model/results/2019-10-18_Non-Convex_Search_Det_Usage.pickle")
 x = 0
 all_ts = False
+add_demand_model = True
 
 t = None if all_ts else max(data["t"])
 groupbys = ['label', 'usage_model', 'gamma', 'holding_cost',
