@@ -1,8 +1,8 @@
 import simpy
-from scm_simulation.rng_classes import GenerateDeterministic, GenerateFromSample
-from scm_simulation.simulation_processes import *
-from scm_simulation.order_policies import *
-from scm_simulation.hospital import Hospital
+from scm_simulation_archive.rng_classes import GenerateDeterministic, GenerateFromSample
+from scm_simulation_archive.simulation_processes import *
+from scm_simulation_archive.order_policies import *
+from scm_simulation_archive.hospital import Hospital
 import random
 from pprint import pprint
 
