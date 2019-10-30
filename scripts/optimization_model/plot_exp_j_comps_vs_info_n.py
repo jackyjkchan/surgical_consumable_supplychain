@@ -11,7 +11,7 @@ from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
 from scripts.optimization_model.model_configs import action_increment_configs
 
 normalize = False
-data = pd.read_pickle("scripts/optimization_model/results/2019-10-19_Non-Convex_Search_Det_Usage.pickle")
+data = pd.read_pickle("2019-10-24_Non_Convex_Search_Det_Usage_Simple.pickle")
 x = 0
 all_ts = False
 add_demand_model = True

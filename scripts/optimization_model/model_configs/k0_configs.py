@@ -19,32 +19,37 @@ rv_2_18 = pacal.DiscreteDistr([2, 18], [0.5, 0.5])
 rv_0_20 = pacal.DiscreteDistr([0, 20], [0.5, 0.5])
 rv_8_16 = pacal.DiscreteDistr([8, 16], [0.5, 0.5])
 
+rvs = [rv_10_10, rv_8_12, rv_6_14, rv_4_16, rv_2_18, rv_0_20]
 configs = []
 i = 0
 
-for info_rv in [rv_6_14]:
-    for horizon in [0, 1, 2, 3]:#, 4, 5, 6, 7, 8, 9]:
-        for k in [50]:
-            for b in [10]:
-                i += 1
+usage_models = [PoissonUsageModel(scale=1),
+                BinomUsageModel(n=4, p=0.25),
+                BinomUsageModel(n=2, p=0.5),
+                DeterministUsageModel(1)]
+
+for rv in rvs:
+    for horizon in [0, 1, 2, 3, 4, 5, 6]:
+        for u in usage_models:
+            for b in [100, 50, 10, 5, 1]:
                 configs.append(ModelConfig(
                     gamma=0.9,
                     lead_time=0,
                     info_state_rvs=None,
                     holding_cost=1,
                     backlogging_cost=b,
-                    setup_cost=k,
+                    setup_cost=0,
                     unit_price=0,
-                    usage_model=DeterministUsageModel(scale=1),
+                    usage_model=u,
                     increments=1,
                     horizon=horizon,
-                    info_rv=rv_6_14,
-                    label="Non_Convex_Search_Det_Usage_Simple",
+                    info_rv=rv,
+                    label="k0_searches",
                     label_index=i)
                 )
-
+                i += 1
 
 if __name__ == "__main__":
-    xs = list(range(0, 1))
-    ts = list(range(0, 30))
-    run_configs(configs, ts, xs, pools=1)
+    xs = list(range(0, 30))
+    ts = list(range(0, 21))
+    run_configs(configs, ts, xs, pools=8)

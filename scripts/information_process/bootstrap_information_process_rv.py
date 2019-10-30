@@ -3,13 +3,11 @@ import os
 import pacal
 import numpy as np
 
-import matplotlib.pyplot as plt
-import scipy.stats as st
-import statsmodels.datasets
-
 import plotly.graph_objs as go
-from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
+from plotly.offline import plot
 
+from scm_analytics.model import SurgeryUsageRegressionModel as SURegressionModel
+from scm_analytics.model.SurgeryUsageRegressionModel import Interaction
 from scm_analytics.model.SurgeryModel import procedure_count_distribution, surgeries_per_day_distribution, \
     pre_process_columns
 from scm_analytics import ScmAnalytics, Analytics
@@ -18,6 +16,7 @@ import datetime
 
 case_service = "Cardiac Surgery"
 item_id = "21920"
+info_granularity = 0.5
 
 analytics = ScmAnalytics.ScmAnalytics(lhs_config)
 
@@ -69,7 +68,6 @@ procedures = pd \
     .reset_index()
 
 procedures["p"] = procedures["count"] / sum(procedures["count"])
-#procedures["procedure"] = procedures["procedure"].apply(lambda x: x.replace(" ", "_"))
 
 
 def procedure_pick_rv(size):
@@ -92,8 +90,6 @@ synthetic_surgeries_df = synthetic_procedure_df \
     .fillna(0) \
     .reset_index()
 
-from scm_analytics.model import SurgeryUsageRegressionModel as SURegressionModel
-from scm_analytics.model.SurgeryUsageRegressionModel import Interaction
 
 feature_df = pd.read_csv(os.path.join("regression_results", item_id))
 features = feature_df["feature"]
@@ -199,9 +195,8 @@ surgery_demand_rv = pacal.BinomialDistr(n, p)
 days = 100000
 
 samples = [sum(emp_surgery_rv.rand(x)) for x in np.random.binomial(n, p, days)]
-increment = 0.5
 
-samples = [round(sample / increment) * increment for sample in samples]
+samples = [round(sample / info_granularity) * info_granularity for sample in samples]
 weekday_elective_trace = go.Histogram(
             x=samples,
             name='Weekday Elective Info RV (mean={:0.2f})'.format(np.mean(samples)),

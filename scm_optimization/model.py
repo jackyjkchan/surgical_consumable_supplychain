@@ -46,6 +46,9 @@ class PoissonUsageModel(UsageModel):
     def usage(self, o):
         return pacal.PoissonDistr(o * self.scale, trunk_eps=self.trunk)
 
+    def random(self, o=1):
+        return numpy.random.poisson(o * self.scale)
+
 
 class BinomUsageModel(UsageModel):
     def __init__(self, n=1, p=0.5):
@@ -56,6 +59,9 @@ class BinomUsageModel(UsageModel):
     def usage(self, o):
         return pacal.BinomialDistr(int(o * self.n), p=self.p)
 
+    def random(self, o=1):
+        return numpy.random.binomial(o * self.scale, self.p)
+
 
 class DeterministUsageModel(UsageModel):
     def __init__(self, scale=1):
@@ -64,6 +70,9 @@ class DeterministUsageModel(UsageModel):
 
     def usage(self, o):
         return pacal.ConstDistr(o * self.scale)
+
+    def random(self, o=1):
+        return o * self.scale
 
 
 class ModelConfig:
@@ -194,15 +203,16 @@ class StationaryOptModel:
             self.unknown_lt_demand_rv = pacal.DiscreteDistr([dirac.a for dirac in unknown_lt_demand_pdf.getDiracs()],
                                                             [dirac.f for dirac in unknown_lt_demand_pdf.getDiracs()])
 
-        if len(self.info_state_rvs[0].get_piecewise_pdf().getDiracs()) == 1:
+        unknown_info = self.info_state_rvs[0]
+        if len(unknown_info.get_piecewise_pdf().getDiracs()) == 1:
             val = self.info_state_rvs[0].get_piecewise_pdf().getDiracs()[0].a
             if val:
-                self.unknown_demand_rv = self.usage_model.usage(unknown_lt_info)
+                self.unknown_demand_rv = self.usage_model.usage(val)
             else:
                 self.unknown_demand_rv = 0
         else:
             unknown_demand_pdf = sum([dirac.f * self.usage_model.usage(dirac.a).get_piecewise_pdf()
-                                      for dirac in unknown_lt_info.get_piecewise_pdf().getDiracs()
+                                      for dirac in unknown_info.get_piecewise_pdf().getDiracs()
                                       ])
             self.unknown_demand_rv = pacal.DiscreteDistr([dirac.a for dirac in unknown_demand_pdf.getDiracs()],
                                                          [dirac.f for dirac in unknown_demand_pdf.getDiracs()])
@@ -221,9 +231,8 @@ class StationaryOptModel:
             self.info_states_cache = info_states
             return self.info_states_cache
 
-    def lambda_t(self, o):
-        return o[0] + self.info_state_rvs[-1]
-
+    # def lambda_t(self, o):
+    #     return o[0] + self.info_state_rvs[-1]
     # # O_t^L in notation
     # def observed_lt_info(self, o):
     #     return sum(o[0: self.lead_time + 1])
