@@ -279,7 +279,8 @@ class NonStationaryOptModel(StationaryOptModel):
         for k in range(self.period):
             info_states = []
             for o in range(info_horizon - 1):
-                relevant_rvs = [self.ns_info_state_rvs[(k - i) % self.period][i] for i in range(o+1, info_horizon)]
+                relevant_rvs = [self.ns_info_state_rvs[(k - i) % self.period][i + o]
+                                for i in range(1, info_horizon-o)]
                 info_vals = [[diracs.a for diracs in rv.get_piecewise_pdf().getDiracs()] for rv in relevant_rvs]
                 info_states.append(set(sum(c) for c in itertools.product(*info_vals)))
             info_states_list.append(list(itertools.product(*info_states)))

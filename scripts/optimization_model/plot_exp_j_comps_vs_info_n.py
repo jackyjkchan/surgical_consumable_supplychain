@@ -24,9 +24,9 @@ groupbys = groupbys + ["info_rv_str"] if "info_rv_str" in data else groupbys
 groupbys = groupbys + ["t"] if t else groupbys
 data = data[(data["t"] == t)] if t else data
 
-data["information_horizon"] = data["info_state_rvs"].apply(lambda x:
-                                                           len(x) - 1 if len(x) > 2 else 1 if x[1].mean() else 0
-                                                           )
+# data["information_horizon"] = data["info_state_rvs"].apply(lambda x:
+#                                                            len(x) - 1 if len(x) > 2 else 1 if x[1].mean() else 0
+#                                                            )
 data = data[(data["inventory_position_state"] == x)]
 j_fields = {"j_value_function": "mean",
             "j_k": "mean",

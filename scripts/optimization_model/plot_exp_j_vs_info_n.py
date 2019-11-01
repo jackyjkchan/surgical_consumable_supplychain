@@ -14,19 +14,22 @@ from scripts.optimization_model.model_configs import action_increment_configs
 normalize = False
 data = pd.read_pickle("scripts/optimization_model/results/2019-10-14_Leadtime.pickle")
 x = 0
-t = max(data["t"])
+all_ts = False
+add_demand_model = True
 
+t = None if all_ts else max(data["t"])
 C0 = pacal.ConstDistr(0)
 groupbys = ['label', 'usage_model', 'gamma', 'holding_cost',
             'backlogging_cost', 'setup_cost', 'unit_price', 'information_horizon',
-            'lead_time', 'increments', 't']
-
-data["information_horizon"] = data["info_state_rvs"].apply(lambda x:
-                                                           len(x) - 1 if len(x) > 2 else 1 if x[1].mean() else 0
-                                                           )
+            'lead_time', 'increments']
+groupbys = groupbys + ["info_rv_str"] if "info_rv_str" in data else groupbys
+groupbys = groupbys + ["t"] if t else groupbys
+data = data[(data["t"] == t)] if t else data
+# data["information_horizon"] = data["info_state_rvs"].apply(lambda x:
+#                                                            len(x) - 1 if len(x) > 2 else 1 if x[1].mean() else 0
+#                                                            )
 
 data = data[(data["inventory_position_state"] == x)]
-#data = data[(data["t"] == t)]
 summary = data.groupby(groupbys).agg({"j_value_function": "mean"}).reset_index()
 
 common_fields = []

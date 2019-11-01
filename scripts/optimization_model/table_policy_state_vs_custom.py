@@ -8,9 +8,7 @@ from datetime import date
 import plotly.graph_objs as go
 from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
 
-
 from scripts.optimization_model.model_configs import action_increment_configs
-
 
 """
 Extracts a policy table with the rows being the policy for various o_t states. The columns will be for some custom dim.
@@ -37,7 +35,8 @@ groupbys = ['label', 'usage_model', 'gamma', 'holding_cost',
 
 data = data[(data["inventory_position_state"] == x)]
 data["policy"] = data.apply(lambda row: (row["order_up_to"], row["base_stock"]), axis=1)
-
+data["information_state"] = data.apply(lambda row: row["information_state"] \
+                                       if row['information_horizon'] else tuple(), axis=1)
 common_fields = []
 common_values = []
 diff_fields = []
@@ -48,8 +47,12 @@ for field in groupbys:
         common_values.append(data[field].iloc[0])
     else:
         diff_fields.append(field)
-diff_fields.remove("information_horizon")
 diff_values = [sorted(set(data[field])) for field in diff_fields]
 
-pt = pd.pivot_table(data, values="policy", index=diff_fields+["information_state"], columns="t", aggfunc=max)
+pt = pd.pivot_table(data,
+                    values="policy",
+                    index=diff_fields + ["information_state"],
+                    columns="t",
+                    aggfunc=max).reset_index()
+pt["information_horizon"] = pt["information_state"].apply(lambda v: len(v))
 pt.to_csv("Policy_Table.csv")
