@@ -1,4 +1,5 @@
 from scm_optimization.model import *
+from pprint import pprint
 import pacal
 import math
 import os
@@ -23,7 +24,7 @@ class ModelConfig:
                  unit_price=0,
                  elective_info_state_rv=None,
                  emergency_info_state_rv=None,
-                 info_horizon=None,
+                 horizon=None,
                  increments=1,
                  usage_model=PoissonUsageModel(scale=1),
                  label=None,
@@ -33,14 +34,13 @@ class ModelConfig:
             ns_info_state_rvs = []
             # 0..4 Weekdays, 5, 6 weekdays
             for rt in range(7):
-                info_state_rv = []
-                t_rt = (rt + info_horizon) % 7
-                info_state_rv = [emergency_info_state_rv] + [pacal.ConstDistr(0)] * info_horizon
+                t_rt = (rt + horizon) % 7
+                info_state_rv = [emergency_info_state_rv] + [pacal.ConstDistr(0)] * horizon
                 if t_rt not in [5, 6]:
                     info_state_rv[-1] += elective_info_state_rv
+                if horizon == 0:
+                    info_state_rv += [pacal.ConstDistr(0)]
                 ns_info_state_rvs.append(info_state_rv)
-
-        print(ns_info_state_rvs)
 
         self.label = label
         self.sub_label = "{}_{}_{}".format(date.today().isoformat(), label, str(label_index))
@@ -56,8 +56,21 @@ class ModelConfig:
             unit_price=unit_price,
             usage_model=usage_model,
             increments=increments,
-            information_horizon=info_horizon
+            information_horizon=horizon
         )
+
+
+def get_model(config):
+    model = NonStationaryOptModel(config.params["gamma"],
+                                  config.params["lead_time"],
+                                  config.params["ns_info_state_rvs"],
+                                  config.params["holding_cost"],
+                                  config.params["backlogging_cost"],
+                                  config.params["setup_cost"],
+                                  config.params["unit_price"],
+                                  increments=config.params["increments"],
+                                  usage_model=config.params["usage_model"])
+    return model
 
 
 def run_config(args):
@@ -94,7 +107,7 @@ def run_config(args):
             for o in model.info_states()[rt]:
 
                 j_value = model.j_function(t, x, o)
-                print(t, x, o, j_value)
+                #print(t, x, o, j_value)
                 j_k = model.j_function_k(t, x, o)
                 j_b = model.j_function_b(t, x, o)
                 j_h = model.j_function_h(t, x, o)
@@ -122,7 +135,7 @@ def run_config(args):
     model.to_pickle("{}_{}/{}".format(date.today().isoformat(), config.label, config.sub_label))
 
 
-def run_configs(configs, ts, xs, pools=4):
+def run_configs(configs, ts, xs, pools=8):
     print("Starting {} Runs: {}".format(str(len(configs)), datetime.now().isoformat()))
     p = Pool(pools)
     p.map(run_config, list((config, ts, xs) for config in configs))
@@ -215,7 +228,7 @@ class NonStationaryOptModel(StationaryOptModel):
                                           for info_state_rvs in self.ns_info_state_rvs)
 
         for k in range(self.period):
-            unknown_lt_info_rv = sum(self.ns_info_state_rvs[(j + k) % self.period][(i + k) % self.info_horizon]
+            unknown_lt_info_rv = sum(self.ns_info_state_rvs[(j + k) % self.period][i]
                                      for j in range(self.lead_time + 1) for i in range(j + 1))
             if len(unknown_lt_info_rv.get_piecewise_pdf().getDiracs()) == 1:
                 v = unknown_lt_info_rv.get_piecewise_pdf().getDiracs()[0].a
@@ -266,7 +279,7 @@ class NonStationaryOptModel(StationaryOptModel):
         for k in range(self.period):
             info_states = []
             for o in range(info_horizon - 1):
-                relevant_rvs = [self.ns_info_state_rvs[(k - i) % self.period][i] for i in range(1, info_horizon - o)]
+                relevant_rvs = [self.ns_info_state_rvs[(k - i) % self.period][i] for i in range(o+1, info_horizon)]
                 info_vals = [[diracs.a for diracs in rv.get_piecewise_pdf().getDiracs()] for rv in relevant_rvs]
                 info_states.append(set(sum(c) for c in itertools.product(*info_vals)))
             info_states_list.append(list(itertools.product(*info_states)))

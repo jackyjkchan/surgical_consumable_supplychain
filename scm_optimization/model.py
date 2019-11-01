@@ -423,6 +423,19 @@ class StationaryOptModel:
             pickle.dump(self, f)
 
 
+def get_model(config):
+    model = StationaryOptModel(config.params["gamma"],
+                               config.params["lead_time"],
+                               config.params["info_state_rvs"],
+                               config.params["holding_cost"],
+                               config.params["backlogging_cost"],
+                               config.params["setup_cost"],
+                               config.params["unit_price"],
+                               increments=config.params["increments"],
+                               usage_model=config.params["usage_model"])
+    return model
+
+
 def run_config(args):
     config, ts, xs = args
     results = pd.DataFrame(columns=['label',
@@ -457,6 +470,7 @@ def run_config(args):
         for x in xs:
             for o in model.info_states():
                 j_value = model.j_function(t, x, o)
+                print(t, x, o, j_value)
                 j_k = model.j_function_k(t, x, o)
                 j_b = model.j_function_b(t, x, o)
                 j_h = model.j_function_h(t, x, o)

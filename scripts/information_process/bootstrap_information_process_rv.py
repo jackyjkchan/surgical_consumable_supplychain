@@ -2,6 +2,7 @@ import pandas as pd
 import os
 import pacal
 import numpy as np
+import pickle
 
 import plotly.graph_objs as go
 from plotly.offline import plot
@@ -15,14 +16,15 @@ from scm_analytics.config import lhs_config
 import datetime
 
 case_service = "Cardiac Surgery"
-item_id = "21920"
-info_granularity = 0.5
+item_id = "38242"
+info_granularity = 1
+eps_trunk = 1e-3
+
+elective_outdir = "scm_implementation/ns_info_state_rvs/elective"
+emergency_outdir = "scm_implementation/ns_info_state_rvs/emergency"
+
 
 analytics = ScmAnalytics.ScmAnalytics(lhs_config)
-
-surgery_df = pre_process_columns(analytics.surgery_df)
-surgery_df = surgery_df[surgery_df["start_date"].notna()]
-surgery_df = surgery_df[surgery_df["start_date"] > datetime.date(2016, 1, 1)]
 
 filters = [{"dim": "case_service",
             "op": "eq",
@@ -32,24 +34,42 @@ filters = [{"dim": "case_service",
             "op": "eq",
             "val": "Elective"
             }]
+elective_filter = [{"dim": "urgent_elective",
+                    "op": "eq",
+                    "val": "Elective"
+                    }]
+emergency_filter = [{"dim": "urgent_elective",
+                     "op": "eq",
+                     "val": "Urgent"
+                     }]
 case_service_filter = [{"dim": "case_service",
                         "op": "eq",
                         "val": case_service
                         }]
 
-surgery_df = Analytics.process_filters(surgery_df, filters=filters)
-dist_df = surgeries_per_day_distribution(surgery_df, day_group_by="is_weekday", filters=filters)
+surgery_df = pre_process_columns(analytics.surgery_df)
+surgery_df = surgery_df[surgery_df["start_date"].notna()]
+surgery_df = surgery_df[surgery_df["start_date"] > datetime.date(2016, 1, 1)]
+surgery_df = Analytics.process_filters(surgery_df, filters=elective_filter + case_service_filter)
+dist_df = surgeries_per_day_distribution(surgery_df, day_group_by="is_weekday", filters=[])
 data = dist_df.set_index("is_weekday").loc[True]["data"]
 bins = range(1 + int(max(data)))
 binom_x = [x + 0.5 for x in bins]
 n = int(max(data))
 p = np.mean(data) / n
 
+surgery_df = pre_process_columns(analytics.surgery_df)
+surgery_df = surgery_df[surgery_df["start_date"].notna()]
+surgery_df = surgery_df[surgery_df["start_date"] > datetime.date(2016, 1, 1)]
+surgery_df = Analytics.process_filters(surgery_df, filters=emergency_filter + case_service_filter)
+dist_df = surgeries_per_day_distribution(surgery_df, filters=[])
+emergency_surgeries_mean = np.mean(dist_df)
+
+surgery_df = Analytics.process_filters(analytics.surgery_df, filters=case_service_filter)
 surgery_df["procedure_count"] = surgery_df["procedures"].apply(lambda x: len(x))
 procedure_count_df = surgery_df.groupby("procedure_count").agg({"event_id": "count"}).reset_index()
 procedure_count_df = procedure_count_df[procedure_count_df["procedure_count"] != 6]
 procedure_count_df["p"] = procedure_count_df["procedure_count"] / sum(procedure_count_df["procedure_count"])
-
 procedure_count_rv = pacal.DiscreteDistr(procedure_count_df["procedure_count"], procedure_count_df["p"])
 
 """
@@ -90,7 +110,6 @@ synthetic_surgeries_df = synthetic_procedure_df \
     .fillna(0) \
     .reset_index()
 
-
 feature_df = pd.read_csv(os.path.join("regression_results", item_id))
 features = feature_df["feature"]
 featured_procedures = list(filter(lambda x: "." not in x, feature_df["feature"]))
@@ -117,9 +136,8 @@ for f in feature_df["feature"]:
         data[f] = 0
 synthetic_surgeries_df["feature_vector"] = data[features].values.tolist()
 coeff = np.array(feature_df["estimate"])
-synthetic_surgeries_df["expected_usage"] = synthetic_surgeries_df["feature_vector"]\
+synthetic_surgeries_df["expected_usage"] = synthetic_surgeries_df["feature_vector"] \
     .apply(lambda x: np.exp(np.dot(x, coeff)))
-
 
 """
 Information rv for empirical surgeries
@@ -142,77 +160,131 @@ data, _ = SURegressionModel.extract_features_data(empirical_surgeries_df,
                                                   interactions,
                                                   other=True)
 empirical_surgeries_df["feature_vector"] = data[features].values.tolist()
-empirical_surgeries_df["expected_usage"] = empirical_surgeries_df["feature_vector"]\
+empirical_surgeries_df["expected_usage"] = empirical_surgeries_df["feature_vector"] \
     .apply(lambda x: np.exp(np.dot(x, coeff)))
 
 """
 Plotly histogram for per surgery info rv, empirical surgeries and synthetic using regression results 
 """
 s = 0
-e = int(max(max(empirical_surgeries_df["expected_usage"]), max(synthetic_surgeries_df["expected_usage"]))+1)
+e = int(max(max(empirical_surgeries_df["expected_usage"]), max(synthetic_surgeries_df["expected_usage"])) + 1)
 empirical_trace = go.Histogram(
-            x=empirical_surgeries_df["expected_usage"],
-            name='Empirical Surgery Info RV (mean={:0.2f})'.format(np.mean(empirical_surgeries_df["expected_usage"])),
-            xbins=dict(
-                start=s,
-                end=e,
-                size=0.5
-            ),
-            histnorm='probability density',
-            opacity=0.75
-        )
+    x=empirical_surgeries_df["expected_usage"],
+    name='Empirical Surgery Info RV (mean={:0.2f})'.format(np.mean(empirical_surgeries_df["expected_usage"])),
+    xbins=dict(
+        start=s,
+        end=e,
+        size=info_granularity
+    ),
+    histnorm='probability density',
+    opacity=0.75
+)
 synthetic_trace = go.Histogram(
-            x=synthetic_surgeries_df["expected_usage"],
-            name='Synthetic Surgery Info RV (mean={:0.2f})'.format(np.mean(synthetic_surgeries_df["expected_usage"])),
-            xbins=dict(
-                start=s,
-                end=e,
-                size=0.5
-            ),
-            histnorm='probability density',
-            opacity=0.75
-        )
+    x=synthetic_surgeries_df["expected_usage"],
+    name='Synthetic Surgery Info RV (mean={:0.2f})'.format(np.mean(synthetic_surgeries_df["expected_usage"])),
+    xbins=dict(
+        start=s,
+        end=e,
+        size=info_granularity
+    ),
+    histnorm='probability density',
+    opacity=0.75
+)
 layout = go.Layout(title="Per Surgery Info R.V Item: {0}".format(item_id),
                    xaxis={'title': 'Info [Expected Usage]'},
                    yaxis={'title': 'Probability Density'})
 figure = go.Figure(
-        data=[empirical_trace, synthetic_trace],
-        layout=layout
-    )
+    data=[empirical_trace, synthetic_trace],
+    layout=layout
+)
 plot(figure, filename="{0}_Per_Surgery_Info_Rv.html".format(item_id))
 
 """
 Plotly histogram for per weekday elective surgery RV
 """
-empirical_rv_df = empirical_surgeries_df.groupby(["expected_usage"])\
-    .agg({"event_id": "count"})\
-    .rename(columns={"event_id": "count"})\
+empirical_rv_df = empirical_surgeries_df.groupby(["expected_usage"]) \
+    .agg({"event_id": "count"}) \
+    .rename(columns={"event_id": "count"}) \
     .reset_index()
 empirical_rv_df["p"] = empirical_rv_df["count"] / sum(empirical_rv_df["count"])
 emp_surgery_rv = pacal.DiscreteDistr(empirical_rv_df["expected_usage"],
                                      empirical_rv_df["p"])
 surgery_demand_rv = pacal.BinomialDistr(n, p)
 days = 100000
-
-samples = [sum(emp_surgery_rv.rand(x)) for x in np.random.binomial(n, p, days)]
-
-samples = [round(sample / info_granularity) * info_granularity for sample in samples]
+elective_samples = [sum(emp_surgery_rv.rand(x)) for x in np.random.binomial(n, p, days)]
+elective_samples = [round(sample / info_granularity) * info_granularity for sample in elective_samples]
 weekday_elective_trace = go.Histogram(
-            x=samples,
-            name='Weekday Elective Info RV (mean={:0.2f})'.format(np.mean(samples)),
-            xbins=dict(
-                start=0,
-                end=max(samples),
-                size=0.5
-            ),
-            histnorm='probability',
-            opacity=0.75
-        )
+    x=elective_samples,
+    name='Weekday Elective Info RV (mean={:0.2f})'.format(np.mean(elective_samples)),
+    xbins=dict(
+        start=0,
+        end=max(elective_samples),
+        size=info_granularity
+    ),
+    histnorm='probability',
+    opacity=0.75
+)
+"""
+Plotly histogram for per day emergency surgery RV
+"""
+emergency_samples = [sum(emp_surgery_rv.rand(x)) for x in np.random.poisson(emergency_surgeries_mean, days)]
+emergency_samples = [round(sample / info_granularity) * info_granularity for sample in emergency_samples]
+emergency_trace = go.Histogram(
+    x=emergency_samples,
+    name='Emergency Info RV (mean={:0.2f})'.format(np.mean(emergency_samples)),
+    xbins=dict(
+        start=0,
+        end=max(emergency_samples),
+        size=info_granularity
+    ),
+    histnorm='probability',
+    opacity=0.75
+)
 layout = go.Layout(title="Weekday Elective Info R.V Item: {0}".format(item_id),
                    xaxis={'title': 'Info State (Poisson Usage)]'},
                    yaxis={'title': 'Probability'})
 figure = go.Figure(
-        data=[weekday_elective_trace],
-        layout=layout
-    )
+    data=[weekday_elective_trace, emergency_trace],
+    layout=layout
+)
 plot(figure, filename="{0}_Weekday_Elective_Info_Rv.html".format(item_id))
+
+elective_info_df = pd.DataFrame({"info": elective_samples, "count": [1] * len(elective_samples)}) \
+    .groupby(["info"]) \
+    .agg({"count": "count"}) \
+    .reset_index()
+elective_info_df["p"] = elective_info_df["count"] / sum(elective_info_df["count"])
+elective_info_rv = pacal.DiscreteDistr(elective_info_df["info"], elective_info_df["p"])
+
+emergency_info_df = pd.DataFrame({"info": emergency_samples, "count": [1] * len(emergency_samples)}) \
+    .groupby(["info"]) \
+    .agg({"count": "count"}) \
+    .reset_index()
+emergency_info_df["p"] = emergency_info_df["count"] / sum(emergency_info_df["count"])
+emergency_info_rv = pacal.DiscreteDistr(emergency_info_df["info"], emergency_info_df["p"])
+
+max_v = 999
+for d in elective_info_rv.get_piecewise_pdf().getDiracs():
+    if 1-elective_info_rv.cdf(d.a) < eps_trunk:
+        max_v = d.a
+        break
+diracs = (pacal.CondLtDistr(elective_info_rv, max_v))\
+    .get_piecewise_pdf().getDiracs()
+diracs = list(filter(lambda d: d.f > 0, diracs))
+elective_info_rv = pacal.DiscreteDistr([d.a for d in diracs], [d.f for d in diracs])
+
+max_v = 999
+for d in emergency_info_rv.get_piecewise_pdf().getDiracs():
+    if 1-emergency_info_rv.cdf(d.a) < eps_trunk:
+        max_v = d.a
+        break
+diracs = (pacal.CondLtDistr(emergency_info_rv, max_v))\
+    .get_piecewise_pdf().getDiracs()
+diracs = list(filter(lambda d: d.f > 0, diracs))
+emergency_info_rv = pacal.DiscreteDistr([d.a for d in diracs], [d.f for d in diracs])
+
+with open(os.path.join(elective_outdir, "{0}.pickle".format(item_id)), "wb") as f:
+    pickle.dump(elective_info_rv, f)
+
+with open(os.path.join(emergency_outdir, "{0}.pickle".format(item_id)), "wb") as f:
+    pickle.dump(emergency_info_rv, f)
