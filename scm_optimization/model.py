@@ -470,7 +470,6 @@ def run_config(args):
         for x in xs:
             for o in model.info_states():
                 j_value = model.j_function(t, x, o)
-                print(t, x, o, j_value)
                 j_k = model.j_function_k(t, x, o)
                 j_b = model.j_function_b(t, x, o)
                 j_h = model.j_function_h(t, x, o)

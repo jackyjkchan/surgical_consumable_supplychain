@@ -205,5 +205,5 @@ def run_r_regression(data, feature_df, model="gaussian"):
                                  on="feature",
                                  how="left",
                                  rsuffix="fit")
-    r2 = compute_rpy2_rsquares(data["y"], fitted_y)
+    r2 = compute_rpy2_rsquares(np.array(data["y"]), np.array(fitted_y))
     return feature_df, r2, fitted_y

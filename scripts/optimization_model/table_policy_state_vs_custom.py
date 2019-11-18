@@ -21,13 +21,13 @@ o=(2, 1)    (S, s)    (S, s)    (S, s)
 o=(2, 2)    (S, s)    (S, s)    (S, s)
 """
 
-data = pd.read_pickle("scripts/optimization_model/results/2019-10-08_Non-Convex_Search_Usage_Model.pickle")
+data = pd.read_pickle("scripts/optimization_model/results/2019-10-30_k0_searches.pickle")
 horizontal_dim = "t"
 x = 0
 
 groupbys = ['label', 'usage_model', 'gamma', 'holding_cost',
             'backlogging_cost', 'setup_cost', 'unit_price', 'information_horizon',
-            'lead_time', 'increments']
+            'lead_time', 'increments', "info_rv_str"]
 
 # data["information_horizon"] = data["info_state_rvs"].apply(lambda x:
 #                                                            len(x) - 1 if len(x) > 2 else 1 if x[1].mean() else 0

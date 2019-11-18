@@ -12,6 +12,16 @@ from scm_analytics.config import lhs_config
 from scm_analytics.model.SurgeryUsageRegressionModel import Interaction
 from scm_analytics.model import SurgeryUsageRegressionModel as SURegressionModel
 
+# usage > 1500 HIGH, > 500 MED, > 200 LOW
+HIGH_USAGE_ITEMS = ["38242", "47320", "56931", "83104", "35893", "83106", "1686"]
+MED_USAGE_ITEMS = ["35863", "80950", "40576", "81007", "129636", "83105", "38200", "39315", "7414", "120767",
+                   "21685", "43940", "44696", "40585", "38246"]
+LOW_USAGE_ITEMS = ["83532", "44748", "38238", "14205", "36551", "82916", "2997", "38247", "42317", "84382", "43954",
+                   "38141", "38261", "38262", "36190"]
+BAD_USAGE = ["62070", "382"]
+
+# 129636, 1686, 44744, 38242 SUPER GOOD FOR POISSON
+
 
 def test_usage_r_regression_flow(item_id=None, save_results=False):
     pd.set_option('display.max_rows', 500)
@@ -33,18 +43,6 @@ def test_usage_r_regression_flow(item_id=None, save_results=False):
     surgery_df = surgery_df[surgery_df["case_service"] == case_service]
     usage_df = usage_df[usage_df["case_service"] == case_service]
 
-    if tail_trim:
-        usage_df = usage_df[usage_df["item_id"] == item_id]
-        trim_index = int(len(usage_df)*(1-tail_trim))
-        expected_usage = np.mean(usage_df["used_qty"])
-        max_usage = max(usage_df["used_qty"])
-
-        trim_thres = usage_df.sort_values(by=["used_qty"])["used_qty"].iloc[trim_index]
-        print("Mean Usage Given > 0:", expected_usage)
-        print("Max Usage:", max_usage)
-        print("Trim Threshold:", trim_thres)
-        usage_df = usage_df[usage_df["used_qty"] <= trim_thres]
-
     surgery_df = surgery_df[surgery_df["event_id"].isin(set(usage_df["event_id"]))]
     surgery_df["procedures"] = surgery_df["procedures"].apply(lambda x: set(e.replace(" ", "_") for e in x))
 
@@ -52,6 +50,18 @@ def test_usage_r_regression_flow(item_id=None, save_results=False):
     r_df = SURegressionModel.surgery_usage_regression_df(surgery_df,
                                                          usage_df,
                                                          item_ids=item_ids)
+
+    if tail_trim:
+        usage_df = usage_df[usage_df["item_id"] == item_id]
+        trim_index = int(len(r_df) * (1 - tail_trim))
+        expected_usage = np.mean(r_df[item_id])
+        max_usage = max(r_df[item_id])
+
+        trim_thres = r_df.sort_values(by=[item_id])[item_id].iloc[trim_index]
+        print("Mean Usage:", expected_usage)
+        print("Max Usage:", max_usage)
+        print("Trim Threshold:", trim_thres)
+        usage_df = usage_df[usage_df["used_qty"] <= trim_thres]
 
     interactions = list([Interaction((p1, p2)) for p1, p2 in combinations(sorted(list(all_procedures)), 2)])
     features = sorted(list(all_procedures))
@@ -62,6 +72,7 @@ def test_usage_r_regression_flow(item_id=None, save_results=False):
                                                                interactions,
                                                                other=True,
                                                                sum_others=False)
+
     print(feature_df)
     feature_df = feature_df[feature_df["occurrence"] >= occ_thres]
     interactions = list(filter(lambda x: str(x) in set(feature_df["feature"]), interactions))
@@ -96,13 +107,13 @@ def test_usage_r_regression_flow(item_id=None, save_results=False):
     print(feature_df)
     print("r2:", r2)
     step = 0.5
-    s = np.floor(min(residuals)) - step/2
-    e = np.ceil(max(residuals)) + step/2
+    s = np.floor(min(residuals)) - step / 2
+    e = np.ceil(max(residuals)) + step / 2
 
     mu = np.mean(residuals)
     std = np.std(residuals, ddof=1)
     bins = np.arange(s, e, step)
-    norm_x = np.arange(s, e, step/10)
+    norm_x = np.arange(s, e, step / 10)
     weights = np.ones(len(residuals)) / len(residuals)
 
     traces = [
@@ -156,8 +167,11 @@ def test_usage_r_regression_flow(item_id=None, save_results=False):
     plt.legend()
     if save_results:
         plt.savefig("{0}_surgery_item_usage_residuals_r2_{1:0.2f}.png".format(item_id, r2), format="png")
-    plt.show()
+    #plt.show()
 
 
 if __name__ == "__main__":
-    test_usage_r_regression_flow(item_id="21920", save_results=True)
+     #for id in HIGH_USAGE_ITEMS + MED_USAGE_ITEMS + LOW_USAGE_ITEMS:
+     for id in ["382"]:
+        print("ITEM ID:", id)
+        test_usage_r_regression_flow(item_id=id, save_results=True)

@@ -11,7 +11,7 @@ from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
 from scripts.optimization_model.model_configs import action_increment_configs
 
 normalize = False
-data = pd.read_pickle("2019-10-24_Non_Convex_Search_Det_Usage_Simple.pickle")
+data = pd.read_pickle("scm_implementation/results/2019-11-02_ns_impl_multi_k_b_n_38242_merged.pickle")
 x = 0
 all_ts = False
 add_demand_model = True
