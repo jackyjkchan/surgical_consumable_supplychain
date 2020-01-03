@@ -1,0 +1,41 @@
+"condition","{1, {0}}","{1, {1}}","{2, {0}}","{2, {1}}","{3, {0}}","{3, {1}}","{4, {0}}","{4, {1}}"
+"{True}",0,"None","None","None","None","None","None","None"
+"{False}",1,"None","None","None","None","None","None","None"
+"{pbhRatio < 1 && p + pbhRatio <= 1}",0,0,"None","None","None","None","None","None"
+"{pbhRatio >= 1 || p + pbhRatio >= 1}",0,1,"None","None","None","None","None","None"
+"{pbhRatio < 1 && p + pbhRatio <= 1}",0,0,0,"None","None","None","None","None"
+"{False}",0,0,1,"None","None","None","None","None"
+"{pbhRatio >= 1 || p + pbhRatio >= 1}",0,1,0,"None","None","None","None","None"
+"{False}",0,1,1,"None","None","None","None","None"
+"{pbhRatio < 1 && p + pbhRatio <= 1}",0,0,0,0,"None","None","None","None"
+"{False}",0,0,0,1,"None","None","None","None"
+"{3*p + 2*pbhRatio <= 3 && (Inequality[1, LessEqual, pbhRatio, Less, 3/2] || (p + pbhRatio >= 1 && pbhRatio < 1))}",0,1,0,0,"None","None","None","None"
+"{2*pbhRatio >= 3 || 3*p + 2*pbhRatio >= 3}",0,1,0,1,"None","None","None","None"
+"{pbhRatio < 1 && p + pbhRatio <= 1}",0,0,0,0,0,"None","None","None"
+"{False}",0,0,0,0,1,"None","None","None"
+"{p + pbhRatio >= 1 && 3*p + 2*pbhRatio <= 3}",0,1,0,0,0,"None","None","None"
+"{False}",0,1,0,0,1,"None","None","None"
+"{2*pbhRatio >= 3 || 3*p + 2*pbhRatio >= 3}",0,1,0,1,0,"None","None","None"
+"{False}",0,1,0,1,1,"None","None","None"
+"{pbhRatio < 1 && p + pbhRatio <= 1}",0,0,0,0,0,0,"None","None"
+"{False}",0,0,0,0,0,1,"None","None"
+"{3*p + 2*pbhRatio <= 3 && (Inequality[1, LessEqual, pbhRatio, Less, 3/2] || (p + pbhRatio >= 1 && pbhRatio < 1))}",0,1,0,0,0,0,"None","None"
+"{False}",0,1,0,0,0,1,"None","None"
+"{7*p + 4*pbhRatio <= 7 && (Inequality[3/2, LessEqual, pbhRatio, Less, 7/4] || (3*p + 2*pbhRatio >= 3 && 2*pbhRatio < 3))}",0,1,0,1,0,0,"None","None"
+"{4*pbhRatio >= 7 || 7*p + 4*pbhRatio >= 7}",0,1,0,1,0,1,"None","None"
+"{pbhRatio < 1 && p + pbhRatio <= 1}",0,0,0,0,0,0,0,"None"
+"{False}",0,0,0,0,0,0,1,"None"
+"{p + pbhRatio >= 1 && 3*p + 2*pbhRatio <= 3}",0,1,0,0,0,0,0,"None"
+"{False}",0,1,0,0,0,0,1,"None"
+"{3*p + 2*pbhRatio >= 3 && 7*p + 4*pbhRatio <= 7}",0,1,0,1,0,0,0,"None"
+"{False}",0,1,0,1,0,0,1,"None"
+"{4*pbhRatio >= 7 || 7*p + 4*pbhRatio >= 7}",0,1,0,1,0,1,0,"None"
+"{False}",0,1,0,1,0,1,1,"None"
+"{pbhRatio < 1 && p + pbhRatio <= 1}",0,0,0,0,0,0,0,0
+"{False}",0,0,0,0,0,0,0,1
+"{3*p + 2*pbhRatio <= 3 && (Inequality[1, LessEqual, pbhRatio, Less, 3/2] || (p + pbhRatio >= 1 && pbhRatio < 1))}",0,1,0,0,0,0,0,0
+"{False}",0,1,0,0,0,0,0,1
+"{7*p + 4*pbhRatio <= 7 && (Inequality[3/2, LessEqual, pbhRatio, Less, 7/4] || (3*p + 2*pbhRatio >= 3 && 2*pbhRatio < 3))}",0,1,0,1,0,0,0,0
+"{False}",0,1,0,1,0,0,0,1
+"{7*p + 4*pbhRatio >= 7 && 15*p + 8*pbhRatio <= 15}",0,1,0,1,0,1,0,0
+"{8*pbhRatio >= 15 || 15*p + 8*pbhRatio >= 15}",0,1,0,1,0,1,0,1

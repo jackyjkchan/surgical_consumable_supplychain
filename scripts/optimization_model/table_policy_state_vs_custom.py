@@ -21,7 +21,7 @@ o=(2, 1)    (S, s)    (S, s)    (S, s)
 o=(2, 2)    (S, s)    (S, s)    (S, s)
 """
 
-data = pd.read_pickle("scripts/optimization_model/results/2019-10-30_k0_searches.pickle")
+data = pd.read_pickle("2019-11-24_base_case_non_convex_analyical.pickle")
 horizontal_dim = "t"
 x = 0
 

@@ -1,0 +1,31 @@
+"condition","{1, {}}","{2, {}}","{3, {}}","{4, {}}"
+"{(pbhRatio < 2 && p + pbhRatio <= 2) || pbhRatio <= 1}",0,"None","None","None"
+"{(pbhRatio > 1 && p + pbhRatio >= 2) || pbhRatio >= 2}",1,"None","None","None"
+"{p + pbhRatio <= 2}",0,0,"None","None"
+"{p + pbhRatio == 2}",0,1,"None","None"
+"{Inequality[1, Less, pbhRatio, Less, 2] && p + pbhRatio == 2}",1,0,"None","None"
+"{p + pbhRatio >= 2}",1,1,"None","None"
+"{(pbhRatio < 2 && p + pbhRatio <= 2) || pbhRatio <= 1}",0,0,0,"None"
+"{Inequality[1, Less, pbhRatio, Less, 2] && p + pbhRatio == 2}",0,0,1,"None"
+"{Inequality[1, Less, pbhRatio, Less, 2] && p + pbhRatio == 2}",0,1,0,"None"
+"{Inequality[1, Less, pbhRatio, Less, 2] && p + pbhRatio == 2}",0,1,1,"None"
+"{Inequality[1, Less, pbhRatio, Less, 2] && p + pbhRatio == 2}",1,0,0,"None"
+"{Inequality[1, Less, pbhRatio, Less, 2] && p + pbhRatio == 2}",1,0,1,"None"
+"{Inequality[1, Less, pbhRatio, Less, 2] && p + pbhRatio == 2}",1,1,0,"None"
+"{(pbhRatio > 1 && p + pbhRatio >= 2) || pbhRatio >= 2}",1,1,1,"None"
+"{p + pbhRatio <= 2}",0,0,0,0
+"{p + pbhRatio == 2}",0,0,0,1
+"{Inequality[1, Less, pbhRatio, Less, 2] && p + pbhRatio == 2}",0,0,1,0
+"{Inequality[1, Less, pbhRatio, Less, 2] && p + pbhRatio == 2}",0,0,1,1
+"{Inequality[1, Less, pbhRatio, Less, 2] && p + pbhRatio == 2}",0,1,0,0
+"{Inequality[1, Less, pbhRatio, Less, 2] && p + pbhRatio == 2}",0,1,0,1
+"{Inequality[1, Less, pbhRatio, Less, 2] && p + pbhRatio == 2}",0,1,1,0
+"{Inequality[1, Less, pbhRatio, Less, 2] && p + pbhRatio == 2}",0,1,1,1
+"{Inequality[1, Less, pbhRatio, Less, 2] && p + pbhRatio == 2}",1,0,0,0
+"{Inequality[1, Less, pbhRatio, Less, 2] && p + pbhRatio == 2}",1,0,0,1
+"{Inequality[1, Less, pbhRatio, Less, 2] && p + pbhRatio == 2}",1,0,1,0
+"{Inequality[1, Less, pbhRatio, Less, 2] && p + pbhRatio == 2}",1,0,1,1
+"{Inequality[1, Less, pbhRatio, Less, 2] && p + pbhRatio == 2}",1,1,0,0
+"{Inequality[1, Less, pbhRatio, Less, 2] && p + pbhRatio == 2}",1,1,0,1
+"{Inequality[1, Less, pbhRatio, Less, 2] && p + pbhRatio == 2}",1,1,1,0
+"{p + pbhRatio >= 2}",1,1,1,1

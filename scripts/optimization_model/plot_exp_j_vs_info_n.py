@@ -12,19 +12,19 @@ from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
 from scripts.optimization_model.model_configs import action_increment_configs
 
 normalize = False
-data = pd.read_pickle("scripts/optimization_model/results/2019-10-14_Leadtime.pickle")
+data = pd.read_pickle("2019-11-24_base_case_non_convex_analyical.pickle")
 x = 0
-all_ts = False
+all_ts = True
 add_demand_model = True
 
 t = None if all_ts else max(data["t"])
 C0 = pacal.ConstDistr(0)
 groupbys = ['label', 'usage_model', 'gamma', 'holding_cost',
             'backlogging_cost', 'setup_cost', 'unit_price', 'information_horizon',
-            'lead_time', 'increments']
+            'lead_time', 'increments', "t"]
 groupbys = groupbys + ["info_rv_str"] if "info_rv_str" in data else groupbys
-groupbys = groupbys + ["t"] if t else groupbys
 data = data[(data["t"] == t)] if t else data
+
 # data["information_horizon"] = data["info_state_rvs"].apply(lambda x:
 #                                                            len(x) - 1 if len(x) > 2 else 1 if x[1].mean() else 0
 #                                                            )
@@ -96,5 +96,7 @@ figure = go.Figure(
     layout=layout
 )
 plot(figure,
-     filename="Marginal_Expected_Cost_Reduction_For_Various_Levels_of_Advanced_Information_{}.html".format(date.today().isoformat()))
+     filename="Marginal_Expected_Cost_Reduction_For_Various_Levels_of_Advanced_Information_{}.html"
+     .format(date.today().isoformat())
+     )
 

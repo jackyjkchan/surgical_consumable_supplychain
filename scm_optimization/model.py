@@ -231,6 +231,7 @@ class StationaryOptModel:
             self.info_states_cache = info_states
             return self.info_states_cache
 
+
     # def lambda_t(self, o):
     #     return o[0] + self.info_state_rvs[-1]
     # # O_t^L in notation

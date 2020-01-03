@@ -1,0 +1,221 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 12.0' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[      7006,        211]
+NotebookOptionsPosition[      6329,        194]
+NotebookOutlinePosition[      6677,        209]
+CellTagsIndexPosition[      6634,        206]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+Cell[BoxData[{
+ RowBox[{"cond", " ", "=", " ", 
+  RowBox[{"{", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"pqbhRatio", "+", 
+      RowBox[{
+       SuperscriptBox["p", "2"], " ", 
+       RowBox[{"(", 
+        RowBox[{
+         RowBox[{"-", "1"}], "+", "q"}], ")"}]}]}], "<", 
+     RowBox[{"1", "+", 
+      RowBox[{"p", " ", 
+       RowBox[{"(", 
+        RowBox[{
+         RowBox[{"-", "2"}], "+", "q"}], ")"}]}]}]}], "&&", 
+    RowBox[{
+     RowBox[{"p", "+", "pqbhRatio"}], "<", "1"}]}], " ", "}"}]}], "\n", 
+ RowBox[{
+  RowBox[{"$Assumption", " ", "=", " ", 
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"pqbhRatio", ">", "0"}], ",", " ", 
+     RowBox[{"0", "<", "p", "<", "1"}], ",", " ", 
+     RowBox[{"0", "<", "q", "<", "1"}]}], "}"}]}], ";"}], "\n", 
+ RowBox[{"cond1", "=", 
+  RowBox[{"Reduce", "[", 
+   RowBox[{"Join", "[", 
+    RowBox[{"cond", ",", " ", "$Assumption"}], "]"}], "]"}]}], "\n", 
+ RowBox[{"cond1", "=", 
+  RowBox[{"Simplify", "[", "cond1", "]"}]}], "\n", 
+ RowBox[{"Collect", "[", 
+  RowBox[{"cond1", ",", 
+   RowBox[{"{", "pbhRatio", "}"}]}], "]"}], "\n", 
+ RowBox[{"Reduce", "[", 
+  RowBox[{"Join", "[", 
+   RowBox[{"cond", ",", " ", "$Assumption"}], "]"}], "]"}], "\n", 
+ RowBox[{"CloudExport", "[", 
+  RowBox[{"cond1", ",", " ", "\"\<Text\>\""}], "]"}], "\n", 
+ RowBox[{"RegionPlot", "[", 
+  RowBox[{"cond", ",", " ", 
+   RowBox[{"{", 
+    RowBox[{"p", ",", " ", "0", ",", " ", "1"}], "}"}], ",", " ", 
+   RowBox[{"{", 
+    RowBox[{"pqbhRatio", ",", " ", "0", ",", " ", "5"}], "}"}], ",", 
+   RowBox[{"MaxRecursion", "\[Rule]", "10"}]}], "]"}], "\n"}], "Input",
+ CellLabel->
+  "In[157]:=",ExpressionUUID->"21f44a69-094b-4d1e-8154-f376ddf6cbe7"],
+
+Cell[BoxData[""], "Input",ExpressionUUID->"be16f29f-35f2-44a8-952c-b402699be9b2"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", " ", 
+   RowBox[{"Value", " ", "of", " ", "informaion"}], "*)"}], "\n", 
+  RowBox[{
+   RowBox[{
+    RowBox[{
+     RowBox[{"expectedCost", "[", "\"\<N0 Case0\>\"", "]"}], " ", "=", 
+     RowBox[{"b", "*", 
+      RowBox[{"p", "/", "2"}]}]}], ";"}], "\n", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"expectedCost", "[", "\"\<N0 Case1\>\"", "]"}], " ", "=", 
+     RowBox[{"h", "-", 
+      FractionBox[
+       RowBox[{"h", " ", "p"}], "2"]}]}], " ", ";"}], "\n", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"expectedCost", "[", "\"\<N1 Case0\>\"", "]"}], "=", 
+     FractionBox[
+      RowBox[{"b", " ", "p"}], "2"]}], " ", ";"}], "\n", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"expectedCost", "[", "\"\<N1 Case1\>\"", "]"}], " ", "=", 
+     RowBox[{"h", "-", 
+      RowBox[{"h", " ", "p"}]}]}], " ", ";"}], "\n", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"expectedCost", "[", "\"\<N2 Case0\>\"", "]"}], "=", 
+     FractionBox[
+      RowBox[{"b", " ", "p"}], "2"]}], " ", ";"}], "\n", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"expectedCost", "[", "\"\<N2 Case1\>\"", "]"}], " ", "=", 
+     FractionBox[
+      RowBox[{
+       RowBox[{"b", " ", 
+        SuperscriptBox["p", "2"]}], "+", 
+       RowBox[{"h", " ", 
+        RowBox[{"(", 
+         RowBox[{"2", "-", 
+          RowBox[{"3", " ", "p"}], "+", 
+          SuperscriptBox["p", "2"]}], ")"}]}]}], 
+      RowBox[{"2", " ", 
+       RowBox[{"(", 
+        RowBox[{"1", "+", "p"}], ")"}]}]]}], " ", ";"}], "\n", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"expectedCost", "[", "\"\<N2 Case2\>\"", "]"}], " ", "=", 
+     RowBox[{"h", "-", 
+      RowBox[{"h", " ", "p"}]}]}], " ", ";"}], "\n", 
+   RowBox[{"(*", " ", 
+    RowBox[{"In", " ", "scenario1"}], " ", "*)"}]}]}]], "Input",
+ CellLabel->
+  "In[179]:=",ExpressionUUID->"1869e471-7804-453f-96d6-819c63ad5ba9"],
+
+Cell[BoxData[{
+ RowBox[{"Simplify", "[", 
+  RowBox[{
+   RowBox[{"(", 
+    RowBox[{
+     RowBox[{"expectedCost", "[", "\"\<N0 Case1\>\"", "]"}], " ", "-", 
+     RowBox[{"expectedCost", "[", "\"\<N1 Case1\>\"", "]"}]}], ")"}], " ", 
+   "/", 
+   RowBox[{"expectedCost", "[", "\"\<N0 Case1\>\"", "]"}]}], " ", "]"}], "\n", 
+ RowBox[{"Simplify", "[", 
+  RowBox[{
+   RowBox[{"(", 
+    RowBox[{
+     RowBox[{"expectedCost", "[", "\"\<N0 Case1\>\"", "]"}], " ", "-", 
+     RowBox[{"expectedCost", "[", "\"\<N2 Case2\>\"", "]"}]}], ")"}], " ", 
+   "/", 
+   RowBox[{"expectedCost", "[", "\"\<N0 Case1\>\"", "]"}]}], " ", "]"}], "\n", 
+ RowBox[{"Simplify", "[", 
+  RowBox[{
+   RowBox[{"(", 
+    RowBox[{
+     RowBox[{"expectedCost", "[", "\"\<N0 Case1\>\"", "]"}], " ", "-", 
+     RowBox[{
+      RowBox[{"(", 
+       RowBox[{"1", "-", "p"}], ")"}], "*", 
+      RowBox[{"h", "/", "2"}]}]}], ")"}], " ", "/", 
+   RowBox[{"expectedCost", "[", "\"\<N0 Case1\>\"", "]"}]}], " ", "]"}], "\n", 
+ RowBox[{
+  RowBox[{"(*", " ", 
+   RowBox[{"In", " ", "scenario2"}], " ", "*)"}]}]}], "Input",
+ CellLabel->
+  "In[154]:=",ExpressionUUID->"1eeeb265-0c4a-49a7-a5db-667015d621af"],
+
+Cell[BoxData[
+ RowBox[{"Simplify", "[", 
+  RowBox[{
+   RowBox[{
+    RowBox[{
+     RowBox[{
+      RowBox[{"4", " ", "p"}], "+", 
+      SuperscriptBox["p", "3"], "+", "pbhRatio"}], "<", 
+     RowBox[{"2", "+", 
+      RowBox[{"3", " ", 
+       SuperscriptBox["p", "2"]}]}]}], "&&", 
+    RowBox[{
+     RowBox[{
+      RowBox[{"3", " ", "p"}], "+", "pbhRatio"}], "<", 
+     RowBox[{"2", "+", 
+      SuperscriptBox["p", "2"]}]}], "&&", 
+    RowBox[{
+     RowBox[{
+      RowBox[{"8", " ", "p"}], "+", 
+      RowBox[{"3", " ", "pbhRatio"}]}], "<", 
+     RowBox[{"6", "+", 
+      RowBox[{"2", " ", 
+       SuperscriptBox["p", "2"]}]}]}], "&&", 
+    RowBox[{
+     RowBox[{
+      RowBox[{"2", " ", "p"}], "+", "pbhRatio"}], "<", "2"}]}], ",", " ", 
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"0", "<", "pbhRatio"}], ",", 
+     RowBox[{"0", "<", "p", "<", "1"}]}], "}"}]}], "]"}]], "Input",
+ CellChangeTimes->{{3.7851833000834365`*^9, 3.7851833324149275`*^9}},
+ CellLabel->
+  "In[109]:=",ExpressionUUID->"9a3fedd0-4796-452e-80b4-8eb5e30ef9b9"]
+},
+WindowSize->{1280, 637},
+WindowMargins->{{-3208, Automatic}, {Automatic, -347}},
+FrontEndVersion->"12.0 for Microsoft Windows (64-bit) (April 8, 2019)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[558, 20, 1664, 47, 185, "Input",ExpressionUUID->"21f44a69-094b-4d1e-8154-f376ddf6cbe7"],
+Cell[2225, 69, 81, 0, 28, "Input",ExpressionUUID->"be16f29f-35f2-44a8-952c-b402699be9b2"],
+Cell[2309, 71, 1826, 54, 262, "Input",ExpressionUUID->"1869e471-7804-453f-96d6-819c63ad5ba9"],
+Cell[4138, 127, 1154, 31, 86, "Input",ExpressionUUID->"1eeeb265-0c4a-49a7-a5db-667015d621af"],
+Cell[5295, 160, 1030, 32, 32, "Input",ExpressionUUID->"9a3fedd0-4796-452e-80b4-8eb5e30ef9b9"]
+}
+]
+*)
+
+(* End of internal cache information *)
+
