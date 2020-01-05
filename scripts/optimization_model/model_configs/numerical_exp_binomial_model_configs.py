@@ -9,8 +9,8 @@ for demand_n in [1, 2, 3, 4]:
     for usage_n in [1, 2, 3, 4]:
         for p in [0.25, 0.5, 0.75]:
             for q in [0.25, 0.5, 0.75]:
-                for horizon in [0, 1, 2, 3, 4, 5]:
-                    for b in [0.1, 0.5, 1, 2, 3, 5, 10, 100]:
+                for horizon in [0, 1, 2, 3, 4]:
+                    for b in [0.001, 0.05, 0.1, 0.5, 1, 2, 4, 100]:
                         configs.append(ModelConfig(
                             gamma=1,
                             lead_time=0,

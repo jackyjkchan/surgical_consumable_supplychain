@@ -12,9 +12,9 @@ from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
 from scripts.optimization_model.model_configs import action_increment_configs
 
 normalize = False
-data = pd.read_pickle("2019-11-24_base_case_non_convex_analyical.pickle")
+data = pd.read_pickle("scripts/optimization_model/results/2020-01-03_numerical_experiments_binomial_model.pickle")
 x = 0
-all_ts = True
+all_ts = False
 add_demand_model = True
 
 t = None if all_ts else max(data["t"])
@@ -30,7 +30,9 @@ data = data[(data["t"] == t)] if t else data
 #                                                            )
 
 data = data[(data["inventory_position_state"] == x)]
-summary = data.groupby(groupbys).agg({"j_value_function": "mean"}).reset_index()
+data["j_value_function"] = data["j_value_function"] * data["information_state_p"]
+
+summary = data.groupby(groupbys).agg({"j_value_function": "sum"}).reset_index()
 
 common_fields = []
 common_values = []

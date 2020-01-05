@@ -161,6 +161,7 @@ class StationaryOptModel:
 
         # static list of possible info states
         self.info_states_cache = None
+        self.info_states_prob_cache = {}
 
         # all caches
         self.value_function_j = {}
@@ -224,13 +225,29 @@ class StationaryOptModel:
             return self.info_states_cache
         else:
             info_vals = [[diracs.a for diracs in rv.get_piecewise_pdf().getDiracs()] for rv in self.info_state_rvs[1:]]
+            info_vals_p = [[diracs.f for diracs in rv.get_piecewise_pdf().getDiracs()] for rv in self.info_state_rvs[1:]]
             info_state_comb = []
+            info_state_comb_p = []
             for i in range(len(self.info_state_rvs) - 1):
                 info_state_comb.append(list(sum(c) for c in itertools.product(*info_vals[i:])))
+                info_state_comb_p.append(list(numpy.product(c) for c in itertools.product(*info_vals_p[i:])))
+
             info_states = list(itertools.product(*info_state_comb))
+            info_states_p = list(numpy.product(ps) for ps in itertools.product(*info_state_comb_p))
             self.info_states_cache = info_states
+            for info_state, p in zip(info_states, info_states_p):
+                if info_state in self.info_states_prob_cache:
+                    self.info_states_prob_cache[info_state] += p
+                else:
+                    self.info_states_prob_cache[info_state] = p
             return self.info_states_cache
 
+    def get_info_state_prob(self, o):
+        if self.info_states_prob_cache:
+            return self.info_states_prob_cache[o]
+        else:
+            self.info_states()
+            return self.info_states_prob_cache[o]
 
     # def lambda_t(self, o):
     #     return o[0] + self.info_state_rvs[-1]
@@ -452,6 +469,7 @@ def run_config(args):
                                     't',
                                     'inventory_position_state',
                                     'information_state',
+                                    'information_state_p',
                                     'j_value_function',
                                     'base_stock',
                                     'order_up_to',
@@ -470,6 +488,7 @@ def run_config(args):
     for t in ts:
         for x in xs:
             for o in model.info_states():
+                info_p = model.get_info_state_prob(o)
                 j_value = model.j_function(t, x, o)
                 j_k = model.j_function_k(t, x, o)
                 j_b = model.j_function_b(t, x, o)
@@ -483,6 +502,7 @@ def run_config(args):
                                't': t,
                                'inventory_position_state': x,
                                'information_state': o,
+                               'information_state_p': info_p,
                                'j_value_function': j_value,
                                'j_k': j_k,
                                'j_b': j_b,
