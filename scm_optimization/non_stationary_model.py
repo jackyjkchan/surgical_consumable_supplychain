@@ -86,6 +86,7 @@ def run_config(args):
                                     't',
                                     'inventory_position_state',
                                     'information_state',
+                                    'information_state_p',
                                     'j_value_function',
                                     'base_stock',
                                     'order_up_to',
@@ -105,7 +106,7 @@ def run_config(args):
         rt = model.rt(t)
         for x in xs:
             for o in model.info_states()[rt]:
-
+                info_p = model.get_info_state_prob(t, o)
                 j_value = model.j_function(t, x, o)
                 #print(t, x, o, j_value)
                 j_k = model.j_function_k(t, x, o)
@@ -120,6 +121,7 @@ def run_config(args):
                                't': t,
                                'inventory_position_state': x,
                                'information_state': o,
+                               'information_state_p': info_p,
                                'j_value_function': j_value,
                                'j_k': j_k,
                                'j_b': j_b,
@@ -276,16 +278,46 @@ class NonStationaryOptModel(StationaryOptModel):
             return self.info_states_cache
         info_horizon = len(self.ns_info_state_rvs[0])
         info_states_list = []
+        info_states_list_p = []
         for k in range(self.period):
             info_states = []
+            info_states_p = []
             for o in range(info_horizon - 1):
                 relevant_rvs = [self.ns_info_state_rvs[(k - i) % self.period][i + o]
                                 for i in range(1, info_horizon-o)]
                 info_vals = [[diracs.a for diracs in rv.get_piecewise_pdf().getDiracs()] for rv in relevant_rvs]
-                info_states.append(set(sum(c) for c in itertools.product(*info_vals)))
+                info_vals_p = [[diracs.f for diracs in rv.get_piecewise_pdf().getDiracs()] for rv in relevant_rvs]
+
+                all_info_states = list(sum(c) for c in itertools.product(*info_vals))
+                all_info_states_p = list(numpy.product(c) for c in itertools.product(*info_vals_p))
+
+                new_info_states_p = {}
+                for v, p in zip(all_info_states, all_info_states_p):
+                    if v in new_info_states_p:
+                        new_info_states_p[v] = new_info_states_p[v] + p
+                    else:
+                        new_info_states_p[v] = p
+
+                #info_states.append(set(sum(c) for c in itertools.product(*info_vals)))
+                info_states.append(list(new_info_states_p.keys()))
+                info_states_p.append(list(new_info_states_p.values()))
+
             info_states_list.append(list(itertools.product(*info_states)))
+            info_states_list_p.append(
+                {v: numpy.product(ps) for v, ps in
+                 zip(itertools.product(*info_states), itertools.product(*info_states_p))}
+            )
         self.info_states_cache = info_states_list
+        self.info_states_prob_cache = info_states_list_p
         return self.info_states_cache
+
+    def get_info_state_prob(self, t, o):
+        rt = self.rt(t)
+        if self.info_states_prob_cache:
+            return self.info_states_prob_cache[rt][o]
+        else:
+            self.info_states()
+            return self.info_states_prob_cache[o]
 
     def state_transition(self, t, y, o):
         rt = self.rt(t)

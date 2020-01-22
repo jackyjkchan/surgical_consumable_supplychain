@@ -26,9 +26,9 @@ configs = []
 
 
 if __name__ == "__main__":
+    i = 0
     for horizon in [1, 2, 3, 4]:
         for rv in [rv_4_16, pacal.PoissonDistr(5, trunk_eps=1e-3)]:
-            i = 0
             s_rv = [rv_0] * horizon + [rv]
             s_rv = s_rv if horizon else s_rv + [rv_0]
             ns_rv = [s_rv] * 7

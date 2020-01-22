@@ -19,7 +19,8 @@ def assert_structure(df):
 
 
 def pre_process_columns(df):
-    df['booking_leadtime'] = df['case_dt'] - df['booking_dt']
+    df['booking_leadtime'] = df['start_dt'] - df['booking_dt']
+    df['booking_leadtime_days'] = df['booking_leadtime'].apply(lambda x: x.days)
     weekday_map = {0: "Monday",
                    1: "Tuesday",
                    2: "Wednesday",

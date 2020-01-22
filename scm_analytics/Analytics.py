@@ -17,6 +17,7 @@ def process_filter(df, filter_dict):
 
     case = {
         "eq": lambda x: x[x[dim] == val],
+        "<=": lambda x: x[x[dim] <= val],
         "==": lambda x: x[x[dim] == val],
         "re": lambda x: x[x[dim].apply(lambda y: bool(re.search(val.lower(), str(y).lower())))],
         "isin": lambda x: x[df[dim].isin(val)]

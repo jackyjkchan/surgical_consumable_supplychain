@@ -24,6 +24,8 @@ BAD_USAGE = ["62070", "382"]
 
 
 def test_usage_r_regression_flow(item_id=None, save_results=False):
+    summary = {"item_id": item_id}
+
     pd.set_option('display.max_rows', 500)
     pd.set_option('display.max_columns', 500)
     pd.set_option('display.width', 1000)
@@ -56,12 +58,23 @@ def test_usage_r_regression_flow(item_id=None, save_results=False):
         trim_index = int(len(r_df) * (1 - tail_trim))
         expected_usage = np.mean(r_df[item_id])
         max_usage = max(r_df[item_id])
+        usage_prob = len(usage_df)/len(surgery_df)
 
         trim_thres = r_df.sort_values(by=[item_id])[item_id].iloc[trim_index]
+        discard_ratio = len(usage_df[usage_df["used_qty"] > trim_thres]) / len(usage_df)
+        usage_df = usage_df[usage_df["used_qty"] <= trim_thres]
+
+        print("Usage Probability:", usage_prob)
         print("Mean Usage:", expected_usage)
         print("Max Usage:", max_usage)
         print("Trim Threshold:", trim_thres)
-        usage_df = usage_df[usage_df["used_qty"] <= trim_thres]
+        print("Discard Ratio:", discard_ratio)
+        summary["usage_p"] = usage_prob
+        summary["mean_usage"] = expected_usage
+        summary["max_usage"] = max_usage
+        summary["trim_thres"] = trim_thres
+        summary["discard_ratio"] = discard_ratio
+
 
     interactions = list([Interaction((p1, p2)) for p1, p2 in combinations(sorted(list(all_procedures)), 2)])
     features = sorted(list(all_procedures))
@@ -106,6 +119,7 @@ def test_usage_r_regression_flow(item_id=None, save_results=False):
     data.to_csv(os.path.join("r_scripts", "test_data2.csv"), index=False)
     print(feature_df)
     print("r2:", r2)
+    summary["r2"] = r2
     step = 0.5
     s = np.floor(min(residuals)) - step / 2
     e = np.ceil(max(residuals)) + step / 2
@@ -168,10 +182,13 @@ def test_usage_r_regression_flow(item_id=None, save_results=False):
     if save_results:
         plt.savefig("{0}_surgery_item_usage_residuals_r2_{1:0.2f}.png".format(item_id, r2), format="png")
     #plt.show()
+    return summary
 
 
 if __name__ == "__main__":
-     #for id in HIGH_USAGE_ITEMS + MED_USAGE_ITEMS + LOW_USAGE_ITEMS:
-     for id in ["382"]:
-        print("ITEM ID:", id)
-        test_usage_r_regression_flow(item_id=id, save_results=True)
+    run_summary = pd.DataFrame()
+    for id in HIGH_USAGE_ITEMS + MED_USAGE_ITEMS + LOW_USAGE_ITEMS:
+       print("ITEM ID:", id)
+       row = test_usage_r_regression_flow(item_id=id, save_results=True)
+       run_summary = run_summary.append(row, ignore_index=True)
+    print(run_summary)

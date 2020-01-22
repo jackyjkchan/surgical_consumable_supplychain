@@ -29,7 +29,8 @@ data = dist_df.set_index("is_weekday").loc[True]["data"]
 print(data)
 bins = range(1 + int(max(data)))
 binom_x = [x+0.5 for x in bins]
-n = int(max(data))
+n = int(max(data))-1
+print(n)
 p = np.mean(data) / n
 plt.hist(data, bins=range(1 + int(max(data))),
          color='C0',

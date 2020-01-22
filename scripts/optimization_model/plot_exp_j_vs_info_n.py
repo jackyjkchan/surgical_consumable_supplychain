@@ -11,8 +11,8 @@ from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
 
 from scripts.optimization_model.model_configs import action_increment_configs
 
-normalize = False
-data = pd.read_pickle("scripts/optimization_model/results/2020-01-03_numerical_experiments_binomial_model.pickle")
+normalize = True
+data = pd.read_pickle("scripts/optimization_model/results/2020-01-07_numerical_experiments_binomial_surgery_demand_n=4_info_0_4_ATTEMPT2.pickle")
 x = 0
 all_ts = False
 add_demand_model = True
