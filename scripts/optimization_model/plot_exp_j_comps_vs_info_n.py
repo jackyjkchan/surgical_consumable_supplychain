@@ -9,9 +9,16 @@ import plotly.graph_objs as go
 from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
 
 from scripts.optimization_model.model_configs import action_increment_configs
+"scm_implementation/results/2020-01-22_ns_impl_38262.pickle"
+"scm_implementation/results/2020-01-22_ns_impl_83532.pickle"
+"scm_implementation/results/2020-01-22_ns_impl_129636.pickle"
+
+data = pd.read_pickle(
+    "scm_implementation/results/2020-01-22_ns_impl_129636.pickle"
+)
 
 normalize = False
-data = pd.read_pickle("scm_implementation/results/2019-11-02_ns_impl_multi_k_b_n_38242_merged.pickle")
+
 x = 0
 all_ts = False
 add_demand_model = True
@@ -28,11 +35,18 @@ data = data[(data["t"] == t)] if t else data
 #                                                            len(x) - 1 if len(x) > 2 else 1 if x[1].mean() else 0
 #                                                            )
 data = data[(data["inventory_position_state"] == x)]
-j_fields = {"j_value_function": "mean",
-            "j_k": "mean",
-            "j_b": "mean",
-            "j_h": "mean",
-            "j_p": "mean"}
+
+data["j_value_function"] = data["j_value_function"] * data["information_state_p"]
+data["j_k"] = data["j_k"] * data["information_state_p"]
+data["j_b"] = data["j_b"] * data["information_state_p"]
+data["j_h"] = data["j_h"] * data["information_state_p"]
+data["j_p"] = data["j_p"] * data["information_state_p"]
+
+j_fields = {"j_value_function": "sum",
+            "j_k": "sum",
+            "j_b": "sum",
+            "j_h": "sum",
+            "j_p": "sum"}
 j_comps = ["j_k", "j_b", "j_h", "j_p"]
 summary = data.groupby(groupbys) \
     .agg(j_fields) \

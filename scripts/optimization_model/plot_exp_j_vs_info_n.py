@@ -12,7 +12,14 @@ from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
 from scripts.optimization_model.model_configs import action_increment_configs
 
 normalize = True
-data = pd.read_pickle("scripts/optimization_model/results/2020-01-07_numerical_experiments_binomial_surgery_demand_n=4_info_0_4_ATTEMPT2.pickle")
+"scm_implementation/results/2020-01-22_ns_impl_38262.pickle"
+"scm_implementation/results/2020-01-22_ns_impl_83532.pickle"
+"scm_implementation/results/2020-01-22_ns_impl_129636.pickle"
+
+data = pd.read_pickle(
+    "scm_implementation/results/2020-01-22_ns_impl_129636.pickle"
+)
+
 x = 0
 all_ts = False
 add_demand_model = True
@@ -31,7 +38,6 @@ data = data[(data["t"] == t)] if t else data
 
 data = data[(data["inventory_position_state"] == x)]
 data["j_value_function"] = data["j_value_function"] * data["information_state_p"]
-
 summary = data.groupby(groupbys).agg({"j_value_function": "sum"}).reset_index()
 
 common_fields = []
@@ -56,7 +62,7 @@ for comb in combinations:
     label = "_".join(["{}={}".format(field, str(val)) for field, val in zip(diff_fields, comb)])
     traces.append(go.Scatter(
         x=d["information_horizon"],
-        y=d['j_value_function'] / max(d['j_value_function']) if normalize else d['j_value_function'],
+        y=1 - d['j_value_function'] / max(d['j_value_function']) if normalize else d['j_value_function'],
         name=label
     ))
 
