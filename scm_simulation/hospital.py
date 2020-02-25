@@ -25,6 +25,26 @@ class SurgeryDemandProcess(object):
         return surgeries
 
 
+class HistoricalElectiveSurgeryDemandProcess(SurgeryDemandProcess):
+    def __init__(self):
+        with open("scm_implementation/simulation_inputs/historical_elective_schedule.pickle", "rb") as f:
+            elective_schedule = pickle.load(f)
+        self.schedule = elective_schedule
+
+    def generate(self, start_day=0, days=1):
+        return self.schedule + [[]]*(days-len(self.schedule))
+
+
+class HistoricalEmergencySurgeryDemandProcess(SurgeryDemandProcess):
+    def __init__(self):
+        with open("scm_implementation/simulation_inputs/historical_emergency_schedule.pickle", "rb") as f:
+            emergency_schedule = pickle.load(f)
+        self.schedule = emergency_schedule
+
+    def generate(self, start_day=0, days=1):
+        return self.schedule + [[]]*(days-len(self.schedule))
+
+
 class ElectiveSurgeryDemandProcess(SurgeryDemandProcess):
     """
     Elective booking process.
@@ -73,7 +93,6 @@ class Hospital:
     """
     def __init__(self,
                  item_ids,
-                 surgeries,
                  ordering_policies,
                  item_lead_times,
                  emergency_surgery_process,
@@ -90,7 +109,6 @@ class Hospital:
         # list of item ids [str, ...]
         self.item_ids = item_ids
         # list of surgery objects to simulate [scm_sim.Surgery, ...] this is not very useful. For validation mostly
-        self.surgeries = surgeries
         self.max_periods = sim_time + warm_up + end_buffer
         self.sim_time = sim_time
         self.warm_up = warm_up
@@ -150,8 +168,8 @@ class Hospital:
         next_surgery_backlog = []
         for surgery in all_surgeries:
             item_demand = {iid: surgery.item_usages[iid].gen() for iid in surgery.item_usages}
-            if all(self.curr_inventory_lvl[item_id] >= item_demand[item_id] for item_id in item_demand):
-                for item_id in item_demand:
+            if all(self.curr_inventory_lvl[item_id] >= item_demand[item_id] for item_id in self.item_ids):
+                for item_id in self.item_ids:
                     self.curr_inventory_lvl[item_id] -= item_demand[item_id]
                     self.curr_inventory_position[item_id] -= item_demand[item_id]
                     self.full_item_demand[item_id][self.clock] += item_demand[item_id]
@@ -177,7 +195,7 @@ class Hospital:
         self.full_item_demand = {iid: self.full_item_demand[iid][s:e] for iid in self.full_item_demand}
 
     def run_simulation(self):
-        while self.clock <= self.max_periods - self.end_buffer:
+        while self.clock < self.max_periods - self.end_buffer:
             self.process_orders()
             self.process_deliveries()
             self.process_demand()

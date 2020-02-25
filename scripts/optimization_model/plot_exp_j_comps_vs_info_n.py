@@ -12,11 +12,13 @@ from scripts.optimization_model.model_configs import action_increment_configs
 "scm_implementation/results/2020-01-22_ns_impl_38262.pickle"
 "scm_implementation/results/2020-01-22_ns_impl_83532.pickle"
 "scm_implementation/results/2020-01-22_ns_impl_129636.pickle"
+"scm_implementation/results/2020-01-22_ns_impl_1686.pickle"
+"scm_implementation/results/2020-01-22_ns_impl_47320.pickle"
+"scm_implementation/results/2020-01-22_ns_impl_56931.pickle"
 
 data = pd.read_pickle(
-    "scm_implementation/results/2020-01-22_ns_impl_129636.pickle"
+    "scm_implementation/results/2020-01-22_ns_impl_56931.pickle"
 )
-
 normalize = False
 
 x = 0

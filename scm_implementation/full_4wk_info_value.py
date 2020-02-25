@@ -34,7 +34,7 @@ if __name__ == "__main__":
     configs = []
     item_ids = [id for id in elective_info_rvs]
 
-    for item_id in [47320, 56931, 1686, 129636, 83532, 38262]:
+    for item_id in ["47320", "56931", "1686", "129636", "83532", "38262"]:
         for b in [100, 1000, 10000]:
             config = ns_model.ModelConfig(gamma=1,
                                           lead_time=0,

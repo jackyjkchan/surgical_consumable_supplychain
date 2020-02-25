@@ -17,22 +17,27 @@ class FixedOrderUpToPolicy(OrderPolicy):
 class AdvancedInfoSsPolicy(OrderPolicy):
 
     def __init__(self, item_id, policy={}, granularity=1):
+        self.is_stationary = True if isinstance(policy, dict) else False
         self.item_id = item_id
         self.policy = policy
-        self.info_horizon = len(list(policy.keys())[0])
+        self.info_horizon = len(list(policy.keys())[0]) if self.is_stationary else len(list(policy[0].keys())[0])
         self.granularity = granularity
-        self.max_states = tuple(max(state[i] for state in policy.keys()) for i in range(self.info_horizon))
+        self.max_states = tuple(max(state[i] for state in policy.keys()) for i in range(self.info_horizon)) \
+            if self.is_stationary else \
+            tuple(tuple(max(state[i] for state in p.keys()) for i in range(self.info_horizon)) for p in policy)
 
     def action(self, hospital):
         iid = self.item_id
-        ts = range(hospital.clock, hospital.clock+self.info_horizon)
+        ts = range(hospital.clock, hospital.clock + self.info_horizon)
         # Extract info state from hospital for item using elective schedule
         info_state = (sum(surgery.item_infos[iid] for surgery in hospital.full_elective_schedule[t]) for t in ts)
         # Round to granularity
-        info_state = tuple(round(info/self.granularity)*self.granularity for info in info_state)
+        info_state = tuple(round(info / self.granularity) * self.granularity for info in info_state)
         # Cap to policy max levels
-        info_state = tuple(min(self.max_states[i], info_state[i]) for i in range(self.info_horizon))
-        order_up_lvl, reorder_lvl = self.policy[info_state]
+        max_states_t = self.max_states if self.is_stationary else self.max_states[hospital.clock % 7]
+        info_state = tuple(min(max_states_t[i], info_state[i]) for i in range(self.info_horizon))
+        order_up_lvl, reorder_lvl = self.policy[info_state] if self.is_stationary \
+            else self.policy[hospital.clock % 7][info_state]
         qty = order_up_lvl if hospital.curr_inventory_position[iid] <= reorder_lvl else 0
         return qty
 

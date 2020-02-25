@@ -6,11 +6,12 @@ import datetime
 import plotly.graph_objs as go
 from plotly.offline import plot
 
-from scripts.usage_regression.usage_regression import HIGH_USAGE_ITEMS, MED_USAGE_ITEMS, LOW_USAGE_ITEMS
+from scripts.usage_regression.usage_regression import CASE_STUDY_ITEMS, HIGH_USAGE_ITEMS, MED_USAGE_ITEMS, \
+    LOW_USAGE_ITEMS
+
 
 def run(case_service="Cardiac Surgery",
         item_id="1686"):
-
     analytics = ScmAnalytics.ScmAnalytics(lhs_config)
     case_service_filter = [{"dim": "case_service",
                             "op": "eq",
@@ -34,7 +35,7 @@ def run(case_service="Cardiac Surgery",
 
     usage_dist = surgery_df.groupby(["procedures"]).agg({"used_qty": lambda x: list(x)}).reset_index()
     usage_dist["occurrences"] = usage_dist["used_qty"].apply(lambda x: len(x))
-    usage_dist = usage_dist[usage_dist["occurrences"] > 50]
+    usage_dist = usage_dist[usage_dist["occurrences"] > 25]
 
     traces = []
     for i in range(len(usage_dist)):
@@ -47,7 +48,7 @@ def run(case_service="Cardiac Surgery",
             name=label,
             xbins=dict(
                 start=0,
-                end=max(usage_dist.iloc[i]["used_qty"])+1,
+                end=max(usage_dist.iloc[i]["used_qty"]) + 1,
                 size=1
             ),
             histnorm='probability',
@@ -65,5 +66,5 @@ def run(case_service="Cardiac Surgery",
 
 
 if __name__ == "__main__":
-    for item_id in HIGH_USAGE_ITEMS + MED_USAGE_ITEMS:
+    for item_id in CASE_STUDY_ITEMS:
         run(item_id=item_id)
