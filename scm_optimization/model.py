@@ -88,6 +88,7 @@ class ModelConfig:
                  horizon=None,
                  info_rv=None,
                  usage_model=PoissonUsageModel(scale=1),
+                 detailed=False,
                  label=None,
                  label_index=None):
 
@@ -100,6 +101,7 @@ class ModelConfig:
         self.label = label
         self.sub_label = "{}_{}_{}".format(date.today().isoformat(), label, str(label_index))
         self.results_fn = self.sub_label + ".pickle"
+        self.detailed = detailed
 
         self.params = dict(
             gamma=gamma,
@@ -113,7 +115,8 @@ class ModelConfig:
             unit_price=unit_price,
             usage_model=usage_model,
             increments=increments,
-            information_horizon=horizon
+            information_horizon=horizon,
+            detailed=detailed
         )
 
 
@@ -134,7 +137,8 @@ class StationaryOptModel:
                  setup_cost,
                  unit_price,
                  usage_model=None,
-                 increments=1
+                 increments=1,
+                 detailed=False
                  ):
 
         # parameters in order:
@@ -142,7 +146,7 @@ class StationaryOptModel:
         # lead time for items to arrive, >= 0
         # information horizon N >= 0, N = 0 for no advanced information
         # vector of random variables, transition of the state of advanced information, M_{t, s} in notation
-
+        self.detailed = detailed
         self.gamma = gamma
         self.lead_time = lead_time
         self.info_state_rvs = info_state_rvs
@@ -217,6 +221,8 @@ class StationaryOptModel:
                                       ])
             self.unknown_demand_rv = pacal.DiscreteDistr([dirac.a for dirac in unknown_demand_pdf.getDiracs()],
                                                          [dirac.f for dirac in unknown_demand_pdf.getDiracs()])
+        self.info_states()
+
 
     def info_states(self):
         if len(self.info_state_rvs) == 1:
@@ -372,18 +378,47 @@ class StationaryOptModel:
             k = self.k if x <= base_stock_lvl else 0
             j_value = k + self.v_function(t, y, o)
 
-            j_b = self.v_b[(t, y, o)]
-            j_h = self.v_h[(t, y, o)]
-            j_p = self.v_p[(t, y, o)]
-            j_k = k + self.v_k[(t, y, o)]
-
             self.value_function_j[(t, x, o)] = j_value
-            self.j_b[(t, x, o)] = j_b
-            self.j_h[(t, x, o)] = j_h
-            self.j_p[(t, x, o)] = j_p
-            self.j_k[(t, x, o)] = j_k
+            if self.detailed:
+                j_b = self.v_b[(t, y, o)]
+                j_h = self.v_h[(t, y, o)]
+                j_p = self.v_p[(t, y, o)]
+                j_k = k + self.v_k[(t, y, o)]
+                self.j_b[(t, x, o)] = j_b
+                self.j_h[(t, x, o)] = j_h
+                self.j_p[(t, x, o)] = j_p
+                self.j_k[(t, x, o)] = j_k
 
             return j_value
+
+    def compute_policies_parallel(self, t):
+        policies = Pool(8).map(self.compute_policy, list((t, o) for o in self.info_states()))
+        for policy, o in zip(policies, self.info_states_cache):
+            order_up, reorder_pt = policy
+            self.base_stock_level_cache[(t, o)] = reorder_pt
+            self.value_function_v_argmin[(t, o)] = order_up
+
+    def compute_j_value_parallel(self, t):
+        max_x = max(self.value_function_v_argmin[(t, o)] for o in self.info_states()) + 10
+        states = list((t, x, o) for x in range(max_x) for o in self.info_states())
+        j_values = Pool(8).map(self.compute_j, states)
+        self.value_function_j = dict()
+        for j_value, state in zip(j_values, states):
+            self.value_function_j[state] = j_value
+        clear_states = list((t-1, x, o) for x in range(max_x) for o in self.info_states_cache)
+
+    def compute_policy(self, args):
+        t, o = args
+        stock_up_level = self.v_function_argmin(t, o)
+        v_min = self.v_function(t, stock_up_level, o)
+        reorder_pt = stock_up_level
+        while self.v_function(t, float(reorder_pt), o) < v_min + self.k:
+            reorder_pt -= self.increments
+        return stock_up_level, reorder_pt
+
+    def compute_j(self, args):
+        t, x, o = args
+        return self.j_function(t, x, o)
 
     def base_stock_level(self, t, o):
         if (t, o) in self.base_stock_level_cache:
@@ -407,6 +442,7 @@ class StationaryOptModel:
         y_min = 0
         v_min = upper
         y = self.increments
+        # MAYBE USE MULTIPROCESSING HERE TO SPEED UP A SINGLE MODEL.
         while self.v_function(t, float(y), o) <= v_min + self.k:
             v = self.v_function(t, float(y), o)
             if v < v_min:
@@ -425,14 +461,15 @@ class StationaryOptModel:
         value = self.G(y, o) + self.gamma * sum(p * self.j_function(*state)
                                                 for p, state in zip(probabilities, new_states))
 
-        self.v_b[(t, y, o)] = self.G_b(y, o) + self.gamma * sum(p * self.j_function_b(*state)
-                                                                for p, state in zip(probabilities, new_states))
-        self.v_h[(t, y, o)] = self.G_h(y, o) + self.gamma * sum(p * self.j_function_h(*state)
-                                                                for p, state in zip(probabilities, new_states))
-        self.v_p[(t, y, o)] = self.G_p(y, o) + self.gamma * sum(p * self.j_function_p(*state)
-                                                                for p, state in zip(probabilities, new_states))
-        self.v_k[(t, y, o)] = self.gamma * sum(p * self.j_function_k(*state)
-                                               for p, state in zip(probabilities, new_states))
+        if self.detailed:
+            self.v_b[(t, y, o)] = self.G_b(y, o) + self.gamma * sum(p * self.j_function_b(*state)
+                                                                    for p, state in zip(probabilities, new_states))
+            self.v_h[(t, y, o)] = self.G_h(y, o) + self.gamma * sum(p * self.j_function_h(*state)
+                                                                    for p, state in zip(probabilities, new_states))
+            self.v_p[(t, y, o)] = self.G_p(y, o) + self.gamma * sum(p * self.j_function_p(*state)
+                                                                    for p, state in zip(probabilities, new_states))
+            self.v_k[(t, y, o)] = self.gamma * sum(p * self.j_function_k(*state)
+                                                   for p, state in zip(probabilities, new_states))
         self.value_function_v[(t, y, o)] = value
         return value
 
@@ -482,37 +519,53 @@ def run_config(args):
                                config.params["setup_cost"],
                                config.params["unit_price"],
                                increments=config.params["increments"],
-                               usage_model=config.params["usage_model"])
+                               usage_model=config.params["usage_model"],
+                               detailed=config.params["detailed"])
     print("Starting {}: {}".format(config.sub_label, datetime.now().isoformat()))
-
+    s = time.time()
     for t in ts:
         for x in xs:
             for o in model.info_states():
                 info_p = model.get_info_state_prob(o)
                 j_value = model.j_function(t, x, o)
-                j_k = model.j_function_k(t, x, o)
-                j_b = model.j_function_b(t, x, o)
-                j_h = model.j_function_h(t, x, o)
-                j_p = model.j_function_p(t, x, o)
+
                 base_stock = model.base_stock_level(t, o)
                 stock_up = model.stock_up_level(t, o)
 
                 result = dict(config.params)
-                result.update({'label': config.label,
-                               't': t,
-                               'inventory_position_state': x,
-                               'information_state': o,
-                               'information_state_p': info_p,
-                               'j_value_function': j_value,
-                               'j_k': j_k,
-                               'j_b': j_b,
-                               'j_h': j_h,
-                               'j_p': j_p,
-                               'base_stock': base_stock,
-                               'order_up_to': stock_up})
+                if model.detailed:
+                    j_k = model.j_function_k(t, x, o)
+                    j_b = model.j_function_b(t, x, o)
+                    j_h = model.j_function_h(t, x, o)
+                    j_p = model.j_function_p(t, x, o)
+                    result.update({'label': config.label,
+                                   't': t,
+                                   'inventory_position_state': x,
+                                   'information_state': o,
+                                   'information_state_p': info_p,
+                                   'j_value_function': j_value,
+                                   'j_k': j_k,
+                                   'j_b': j_b,
+                                   'j_h': j_h,
+                                   'j_p': j_p,
+                                   'base_stock': base_stock,
+                                   'order_up_to': stock_up})
+                else:
+                    result.update({'label': config.label,
+                                   't': t,
+                                   'inventory_position_state': x,
+                                   'information_state': o,
+                                   'information_state_p': info_p,
+                                   'j_value_function': j_value,
+                                   'base_stock': base_stock,
+                                   'order_up_to': stock_up})
+
+
+
                 results = results.append(result, ignore_index=True)
         results.to_pickle(config.results_fn)
-    print("Finished {}: {}".format(config.sub_label, datetime.now().isoformat()))
+    duration = time.time() - s
+    print("Finished {}: {} - {}".format(config.sub_label, datetime.now().isoformat()), str(duration))
     if not os.path.exists("{}_{}".format(date.today().isoformat(), config.label)):
         os.mkdir("{}_{}".format(date.today().isoformat(), config.label))
     model.to_pickle("{}_{}/{}".format(date.today().isoformat(), config.label, config.sub_label))
@@ -520,8 +573,7 @@ def run_config(args):
 
 def run_configs(configs, ts, xs, pools=4):
     print("Starting {} Runs: {}".format(str(len(configs)), datetime.now().isoformat()))
-    p = Pool(pools)
-    p.map(run_config, list((config, ts, xs) for config in configs))
+    Pool(pools).map(run_config, list((config, ts, xs) for config in configs))
     results = list(pd.read_pickle(config.results_fn) for config in configs)
     results = pd.concat(results)
     merged_fn = "{}_{}.pickle".format(date.today().isoformat(), configs[0].label)
@@ -536,7 +588,8 @@ if __name__ == "__main__":
     horizon = 2
     info_state_rvs = [pacal.ConstDistr(0),
                       pacal.ConstDistr(0),
-                      pacal.DiscreteDistr([1, 2, 19, 20], [0.25, 0.25, 0.25, 0.25])]
+                      #pacal.DiscreteDistr([1, 2, 19, 20], [0.25, 0.25, 0.25, 0.25])
+                      pacal.PoissonDistr(5, trunk_eps=1e-3) ]
     holding_cost = 1
     backlogging_cost = 10
     setup_cost = 5
@@ -547,7 +600,6 @@ if __name__ == "__main__":
     # sage_model = None
     model = StationaryOptModel(gamma,
                                lead_time,
-                               horizon,
                                info_state_rvs,
                                holding_cost,
                                backlogging_cost,
@@ -557,22 +609,51 @@ if __name__ == "__main__":
 
     # t, x, o = model.state_transition(10, 10, (3, 2))
 
+    # s = time.time()
+    # print(model.j_function(1, 0, (3, 2)))
+    # print("run time:", time.time() - s)
+    # s = time.time()
+    # print(model.j_function(2, 0, (3, 2)))
+    # print("run time:", time.time() - s)
+    # s = time.time()
+    # print(model.j_function(3, 0, (3, 2)))
+    # print("run time:", time.time() - s)
+    # s = time.time()
+    # print(model.j_function(4, 0, (3, 2)))
+    # print("run time:", time.time() - s)
+    # s = time.time()
+    # print(model.j_function(5, 0, (3, 2)))
+    # print("run time:", time.time() - s)
+    # s = time.time()
+
     s = time.time()
-    print(model.j_function(1, 0, (3, 2)))
+    model.compute_policies_parallel(0)
+    model.compute_j_value_parallel(0)
+    model.compute_policies_parallel(1)
+    model.compute_j_value_parallel(1)
+    model.compute_policies_parallel(2)
+    model.compute_j_value_parallel(2)
     print("run time:", time.time() - s)
+    print(model.value_function_j)
+    max_x = max(key[1] for key in model.value_function_j.keys())
+    print(max_x)
+
+    model = StationaryOptModel(gamma,
+                               lead_time,
+                               info_state_rvs,
+                               holding_cost,
+                               backlogging_cost,
+                               setup_cost,
+                               unit_price,
+                               usage_model=usage_model)
     s = time.time()
-    print(model.j_function(2, 0, (3, 2)))
+    for t in range(3):
+        for o in model.info_states():
+            for x in range(max_x+1):
+                model.j_function(t, x, o)
     print("run time:", time.time() - s)
-    s = time.time()
-    print(model.j_function(3, 0, (3, 2)))
-    print("run time:", time.time() - s)
-    s = time.time()
-    print(model.j_function(4, 0, (3, 2)))
-    print("run time:", time.time() - s)
-    s = time.time()
-    print(model.j_function(5, 0, (3, 2)))
-    print("run time:", time.time() - s)
-    s = time.time()
+    print(model.value_function_j)
+
 
     # print(model.value_function_j)
     # print(model.value_function_v)
