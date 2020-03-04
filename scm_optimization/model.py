@@ -565,7 +565,7 @@ def run_config(args):
                 results = results.append(result, ignore_index=True)
         results.to_pickle(config.results_fn)
     duration = time.time() - s
-    print("Finished {}: {} - {}".format(config.sub_label, datetime.now().isoformat()), str(duration))
+    print("Finished {}: {} - {}".format(config.sub_label, datetime.now().isoformat(), str(duration)))
     if not os.path.exists("{}_{}".format(date.today().isoformat(), config.label)):
         os.mkdir("{}_{}".format(date.today().isoformat(), config.label))
     model.to_pickle("{}_{}/{}".format(date.today().isoformat(), config.label, config.sub_label))
