@@ -25,6 +25,41 @@ class SurgeryDemandProcess(object):
         return surgeries
 
 
+class EmpiricalElectiveSurgeryDemandProcess(SurgeryDemandProcess):
+    def __init__(self, seed=0):
+        with open("scm_implementation/simulation_inputs/historical_surgeries.pickle", "rb") as f:
+            self.surgeries = list(pickle.load(f).values())
+
+        with open("scm_implementation/simulation_inputs/empirical_elective_surgery_distribution.pickle", "rb") as f:
+            self.surgeries_per_day_sample = pickle.load(f)
+        self.seed = seed
+
+    def generate(self, start_day=0, days=1, seed=0):
+        np.random.seed(self.seed)
+        num_surgeries = np.random.choice(self.surgeries_per_day_sample, 365)
+        surgeries = list(list(np.random.choice(self.surgeries, num)) for num in num_surgeries)
+        for i in range(365):
+            if (i % 7) in [5, 6]:
+                surgeries[i] = []
+        return surgeries
+
+
+class EmpiricalEmergencySurgeryDemandProcess(SurgeryDemandProcess):
+    def __init__(self, seed=0):
+        with open("scm_implementation/simulation_inputs/historical_surgeries.pickle", "rb") as f:
+            self.surgeries = list(pickle.load(f).values())
+
+        with open("scm_implementation/simulation_inputs/empirical_emergency_surgery_distribution.pickle", "rb") as f:
+            self.surgeries_per_day_sample = pickle.load(f)
+        self.seed = seed
+
+    def generate(self, start_day=0, days=1, seed=0):
+        np.random.seed(self.seed)
+        num_surgeries = np.random.choice(self.surgeries_per_day_sample, 365)
+        surgeries = list(list(np.random.choice(self.surgeries, num)) for num in num_surgeries)
+        return surgeries
+
+
 class HistoricalElectiveSurgeryDemandProcess(SurgeryDemandProcess):
     def __init__(self):
         with open("scm_implementation/simulation_inputs/historical_elective_schedule.pickle", "rb") as f:
