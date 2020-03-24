@@ -4,3 +4,4 @@ src_data
 *.pyo
 scripts/optimization_model/results
 scm_implementation/results/
+regression_inputs/
