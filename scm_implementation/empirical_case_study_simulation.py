@@ -55,6 +55,9 @@ def run(args):
 
 
 if __name__ == "__main__":
+
+    def halfwidth(series): return 1.96* np.std(series)/np.sqrt(len(series))
+
     pool = Pool(8)
     results = pd.DataFrame()
     item_ids = ["47320", "56931", "1686", "129636", "83532", "38262"]
@@ -72,3 +75,10 @@ if __name__ == "__main__":
     for r in rs:
         results = results.append(r, ignore_index=True)
     print(results)
+
+    summary = results.groupby(["backlogging_cost", "info_horizon", "item_id"])\
+        .agg({"surgeries_backlogged": ["mean", "std", halfwidth],
+              "average_inventory_level": ["mean", "std", halfwidth]}).reset_index()
+    summary = summary.pivot_table(["average_inventory_level", "surgeries_backlogged"],
+                                  ["backlogging_cost", "item_id"], ["info_horizon"])
+    summary.to_csv("empirical_case_study_summary.csv")
