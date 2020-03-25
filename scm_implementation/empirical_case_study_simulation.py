@@ -1,5 +1,6 @@
 from scm_simulation.hospital import Hospital, EmpiricalElectiveSurgeryDemandProcess, \
-    EmpiricalEmergencySurgeryDemandProcess
+    EmpiricalEmergencySurgeryDemandProcess, EmpiricalEmergencySurgeryDemandProcessWithPoissonUsage, \
+    EmpiricalElectiveSurgeryDemandProcessWithPoissonUsage
 from scm_simulation.item import Item
 from scm_simulation.surgery import Surgery
 from scm_simulation.rng_classes import GeneratePoisson, GenerateFromSample, GenerateDeterministic
@@ -8,6 +9,7 @@ import pickle
 import pandas as pd
 import numpy as np
 from multiprocessing import Pool
+from datetime import datetime
 
 """
 Elective and emergency surgeries per day are empirically generated
@@ -29,8 +31,10 @@ def run(args):
 
     policy = {item_id: AdvancedInfoSsPolicy(item_id, policy)}
     order_lt = {item_id: GenerateDeterministic(0)}
-    elective_process = EmpiricalElectiveSurgeryDemandProcess(seed=seed)
-    emergency_process = EmpiricalEmergencySurgeryDemandProcess(seed=seed)
+    #elective_process = EmpiricalElectiveSurgeryDemandProcess(seed=seed)
+    elective_process = EmpiricalElectiveSurgeryDemandProcessWithPoissonUsage(seed=seed)
+    #emergency_process = EmpiricalEmergencySurgeryDemandProcess(seed=seed)
+    emergency_process = EmpiricalEmergencySurgeryDemandProcessWithPoissonUsage(seed=seed)
 
     hospital = Hospital([item_id],
                         policy,
@@ -45,20 +49,25 @@ def run(args):
     hospital.trim_data()
 
     stock_outs = sum(len(d) for d in hospital.full_surgery_backlog)
-    return {"item_id": item_id,
+
+    r = {"item_id": item_id,
             "backlogging_cost": b,
             "info_horizon": n,
             "average_inventory_level": np.mean(hospital.full_inventory_lvl[item_id]),
             "surgeries_backlogged": stock_outs,
             "seed": seed
             }
+    print("Finished: ", datetime.now().isoformat(), "-", item_id, b, n, seed)
+    return r
 
 
 if __name__ == "__main__":
 
-    def halfwidth(series): return 1.96* np.std(series)/np.sqrt(len(series))
+    def halfwidth(series):
+        return 1.96 * np.std(series) / np.sqrt(len(series))
 
-    pool = Pool(8)
+
+    pool = Pool(4)
     results = pd.DataFrame()
     item_ids = ["47320", "56931", "1686", "129636", "83532", "38262"]
     bs = [100, 1000, 10000]
@@ -76,7 +85,7 @@ if __name__ == "__main__":
         results = results.append(r, ignore_index=True)
     print(results)
 
-    summary = results.groupby(["backlogging_cost", "info_horizon", "item_id"])\
+    summary = results.groupby(["backlogging_cost", "info_horizon", "item_id"]) \
         .agg({"surgeries_backlogged": ["mean", "std", halfwidth],
               "average_inventory_level": ["mean", "std", halfwidth]}).reset_index()
     summary = summary.pivot_table(["average_inventory_level", "surgeries_backlogged"],

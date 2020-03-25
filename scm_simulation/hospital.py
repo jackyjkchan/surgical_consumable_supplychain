@@ -1,12 +1,14 @@
 import pandas as pd
 import numpy as np
 import pickle
+from scm_simulation.rng_classes import GeneratePoisson
 
 
 class SurgeryDemandProcess(object):
     """
     Base class for booking surgeries. Derives into elective and emergency booking classes.
     """
+
     def __init__(self, surgeries, rng, weekday_only=True):
         self.surgeries = surgeries
         self.rng = rng
@@ -25,6 +27,50 @@ class SurgeryDemandProcess(object):
         return surgeries
 
 
+class EmpiricalElectiveSurgeryDemandProcessWithPoissonUsage(SurgeryDemandProcess):
+    def __init__(self, seed=0):
+        with open("scm_implementation/simulation_inputs/historical_surgeries.pickle", "rb") as f:
+            self.surgeries = list(pickle.load(f).values())
+
+        with open("scm_implementation/simulation_inputs/empirical_elective_surgery_distribution.pickle", "rb") as f:
+            self.surgeries_per_day_sample = pickle.load(f)
+        self.seed = seed
+
+        for surgery in self.surgeries:
+            surgery.item_usages = {item_id: GeneratePoisson(surgery.item_infos[item_id])
+                                   for item_id in surgery.item_infos}
+
+    def generate(self, start_day=0, days=1):
+        np.random.seed(self.seed)
+        num_surgeries = np.random.choice(self.surgeries_per_day_sample, 365)
+        surgeries = list(list(np.random.choice(self.surgeries, num)) for num in num_surgeries)
+        for i in range(365):
+            if (i % 7) in [5, 6]:
+                surgeries[i] = []
+        return surgeries
+
+
+class EmpiricalEmergencySurgeryDemandProcessWithPoissonUsage(SurgeryDemandProcess):
+    def __init__(self, seed=0):
+        with open("scm_implementation/simulation_inputs/historical_surgeries.pickle", "rb") as f:
+            self.surgeries = list(pickle.load(f).values())
+
+        with open("scm_implementation/simulation_inputs/empirical_emergency_surgery_distribution.pickle", "rb") as f:
+            self.surgeries_per_day_sample = pickle.load(f)
+
+        for surgery in self.surgeries:
+            surgery.item_usages = {item_id: GeneratePoisson(surgery.item_infos[item_id])
+                                   for item_id in surgery.item_infos}
+        self.seed = seed
+
+    def generate(self, start_day=0, days=1):
+        np.random.seed(self.seed)
+        num_surgeries = np.random.choice(self.surgeries_per_day_sample, 365)
+        surgeries = list(list(np.random.choice(self.surgeries, num)) for num in num_surgeries)
+
+        return surgeries
+
+
 class EmpiricalElectiveSurgeryDemandProcess(SurgeryDemandProcess):
     def __init__(self, seed=0):
         with open("scm_implementation/simulation_inputs/historical_surgeries.pickle", "rb") as f:
@@ -34,7 +80,7 @@ class EmpiricalElectiveSurgeryDemandProcess(SurgeryDemandProcess):
             self.surgeries_per_day_sample = pickle.load(f)
         self.seed = seed
 
-    def generate(self, start_day=0, days=1, seed=0):
+    def generate(self, start_day=0, days=1):
         np.random.seed(self.seed)
         num_surgeries = np.random.choice(self.surgeries_per_day_sample, 365)
         surgeries = list(list(np.random.choice(self.surgeries, num)) for num in num_surgeries)
@@ -53,7 +99,7 @@ class EmpiricalEmergencySurgeryDemandProcess(SurgeryDemandProcess):
             self.surgeries_per_day_sample = pickle.load(f)
         self.seed = seed
 
-    def generate(self, start_day=0, days=1, seed=0):
+    def generate(self, start_day=0, days=1):
         np.random.seed(self.seed)
         num_surgeries = np.random.choice(self.surgeries_per_day_sample, 365)
         surgeries = list(list(np.random.choice(self.surgeries, num)) for num in num_surgeries)
@@ -67,7 +113,7 @@ class HistoricalElectiveSurgeryDemandProcess(SurgeryDemandProcess):
         self.schedule = elective_schedule
 
     def generate(self, start_day=0, days=1):
-        return self.schedule + [[]]*(days-len(self.schedule))
+        return self.schedule + [[]] * (days - len(self.schedule))
 
 
 class HistoricalEmergencySurgeryDemandProcess(SurgeryDemandProcess):
@@ -77,7 +123,7 @@ class HistoricalEmergencySurgeryDemandProcess(SurgeryDemandProcess):
         self.schedule = emergency_schedule
 
     def generate(self, start_day=0, days=1):
-        return self.schedule + [[]]*(days-len(self.schedule))
+        return self.schedule + [[]] * (days - len(self.schedule))
 
 
 class ElectiveSurgeryDemandProcess(SurgeryDemandProcess):
@@ -85,6 +131,7 @@ class ElectiveSurgeryDemandProcess(SurgeryDemandProcess):
     Elective booking process.
     model_params (n=int, p=int): binomial n, p for weekdays [0,...,4], 0 for weekends [5, 6]
     """
+
     def __init__(self, surgeries, model_params, weekday_only=True):
         SurgeryDemandProcess.__init__(self, surgeries, model_params)
         assert len(model_params) == 2
@@ -96,7 +143,7 @@ class ElectiveSurgeryDemandProcess(SurgeryDemandProcess):
 
     def generate(self, start_day=0, days=1):
         start = start_day % 7
-        weekends = set([(5-start)%7, (6-start)%7])
+        weekends = set([(5 - start) % 7, (6 - start) % 7])
         num_surgeries = np.random.binomial(self.n, self.p, size=days)
         surgeries = list(list(np.random.choice(self.surgeries, num)) for num in num_surgeries)
         if self.weekday_only:
@@ -111,6 +158,7 @@ class EmergencySurgeryDemandProcess(SurgeryDemandProcess):
     Elective booking process.
     model_params (n=int, p=int): binomial n, p for weekdays [0,...,4], 0 for weekends [5, 6]
     """
+
     def __init__(self, surgeries, model_params):
         SurgeryDemandProcess.__init__(self, surgeries, model_params)
         self.mu = model_params
@@ -126,6 +174,7 @@ class Hospital:
     Hospital simulation object
     Backlog surgeries if not all items are available.
     """
+
     def __init__(self,
                  item_ids,
                  ordering_policies,
@@ -173,7 +222,7 @@ class Hospital:
 
         # Full historical states
         # all item deliveries, inventory_level, surgery_backlog, order_qty
-        self.full_item_deliveries = {item_id: self.max_periods*[0] for item_id in item_ids}
+        self.full_item_deliveries = {item_id: self.max_periods * [0] for item_id in item_ids}
         self.full_inventory_lvl = {item_id: self.max_periods * [0] for item_id in item_ids}
         self.full_order_qty = {item_id: self.max_periods * [0] for item_id in item_ids}
         self.full_item_demand = {item_id: self.max_periods * [0] for item_id in item_ids}
