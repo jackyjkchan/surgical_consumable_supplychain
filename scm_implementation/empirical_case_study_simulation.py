@@ -67,7 +67,7 @@ if __name__ == "__main__":
         return 1.96 * np.std(series) / np.sqrt(len(series))
 
 
-    pool = Pool(4)
+    pool = Pool(8)
     results = pd.DataFrame()
     item_ids = ["47320", "56931", "1686", "129636", "83532", "38262"]
     bs = [100, 1000, 10000]
@@ -83,11 +83,12 @@ if __name__ == "__main__":
     rs = pool.map(run, all_args)
     for r in rs:
         results = results.append(r, ignore_index=True)
-    print(results)
+
+    results.to_csv("empirical_case_study_results.csv")
 
     summary = results.groupby(["backlogging_cost", "info_horizon", "item_id"]) \
         .agg({"surgeries_backlogged": ["mean", "std", halfwidth],
-              "average_inventory_level": ["mean", "std", halfwidth]}).reset_index()
+              "average_inventory_level": ["mean", "std", halfwidth]})
     summary = summary.pivot_table(["average_inventory_level", "surgeries_backlogged"],
                                   ["backlogging_cost", "item_id"], ["info_horizon"])
     summary.to_csv("empirical_case_study_summary.csv")
