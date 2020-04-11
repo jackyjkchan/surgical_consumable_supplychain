@@ -107,23 +107,43 @@ class EmpiricalEmergencySurgeryDemandProcess(SurgeryDemandProcess):
 
 
 class HistoricalElectiveSurgeryDemandProcess(SurgeryDemandProcess):
-    def __init__(self):
+    def __init__(self, item_ids=[], threshold=0.01):
         with open("scm_implementation/simulation_inputs/historical_elective_schedule.pickle", "rb") as f:
             elective_schedule = pickle.load(f)
-        self.schedule = elective_schedule
 
-    def generate(self, start_day=0, days=1):
-        return self.schedule + [[]] * (days - len(self.schedule))
+        self.schedule = elective_schedule
+        for item_id in item_ids:
+            usages = sorted([surgery.item_usages[item_id].gen() for day in elective_schedule for surgery in day])
+            usages = list(filter(lambda x: x>0, usages))
+            if usages:
+                thres = usages[int(len(usages) * (1 - threshold))]
+                self.schedule = \
+                    [list(filter(lambda s: s.item_usages[item_id].gen() <= thres, day)) for day in self.schedule]
+
+    def generate(self, warm_up=0, end_buffer=1):
+        start_days = [[]] * warm_up
+        end_days = [[]] * end_buffer
+        return start_days + self.schedule + end_days
 
 
 class HistoricalEmergencySurgeryDemandProcess(SurgeryDemandProcess):
-    def __init__(self):
+    def __init__(self, item_ids=[], threshold=0.01):
         with open("scm_implementation/simulation_inputs/historical_emergency_schedule.pickle", "rb") as f:
             emergency_schedule = pickle.load(f)
         self.schedule = emergency_schedule
 
-    def generate(self, start_day=0, days=1):
-        return self.schedule + [[]] * (days - len(self.schedule))
+        for item_id in item_ids:
+            usages = sorted([surgery.item_usages[item_id].gen() for day in emergency_schedule for surgery in day])
+            usages = list(filter(lambda x: x > 0, usages))
+            if usages:
+                thres = usages[int(len(usages) * (1 - threshold))]
+                self.schedule = \
+                    [list(filter(lambda s: s.item_usages[item_id].gen() <= thres, day)) for day in self.schedule]
+
+    def generate(self, warm_up=0, end_buffer=1):
+        start_days = [[]] * warm_up
+        end_days = [[]] * end_buffer
+        return start_days + self.schedule + end_days
 
 
 class ElectiveSurgeryDemandProcess(SurgeryDemandProcess):
@@ -228,8 +248,8 @@ class Hospital:
         self.full_item_demand = {item_id: self.max_periods * [0] for item_id in item_ids}
         self.full_surgery_backlog = self.max_periods * [None]
 
-        self.full_elective_schedule = self.elective_surgery_process.generate(days=self.max_periods)
-        self.full_emergency_schedule = self.emergency_surgery_process.generate(days=self.max_periods)
+        self.full_elective_schedule = self.elective_surgery_process.generate(warm_up=warm_up, end_buffer=end_buffer)
+        self.full_emergency_schedule = self.emergency_surgery_process.generate(warm_up=warm_up, end_buffer=end_buffer)
         self.full_item_info_state = {item_id: self.max_periods * [0] for item_id in item_ids}
 
     def process_orders(self):
@@ -253,6 +273,8 @@ class Hospital:
         for surgery in all_surgeries:
             item_demand = {iid: surgery.item_usages[iid].gen() for iid in surgery.item_usages}
             if all(self.curr_inventory_lvl[item_id] >= item_demand[item_id] for item_id in self.item_ids):
+                #for item_id in self.item_ids:
+                #    print(self.curr_inventory_lvl[item_id], " >= ", item_demand[item_id])
                 for item_id in self.item_ids:
                     self.curr_inventory_lvl[item_id] -= item_demand[item_id]
                     self.curr_inventory_position[item_id] -= item_demand[item_id]

@@ -38,8 +38,9 @@ class AdvancedInfoSsPolicy(OrderPolicy):
         info_state = tuple(min(max_states_t[i], info_state[i]) for i in range(self.info_horizon))
         order_up_lvl, reorder_lvl = self.policy[info_state] if self.is_stationary \
             else self.policy[hospital.clock % 7][info_state]
-        qty = order_up_lvl if hospital.curr_inventory_position[iid] <= reorder_lvl else 0
-        return qty
+        action = order_up_lvl - hospital.curr_inventory_position[iid] \
+            if hospital.curr_inventory_position[iid] <= reorder_lvl else 0
+        return action
 
 
 class FixedSsPolicy(OrderPolicy):
