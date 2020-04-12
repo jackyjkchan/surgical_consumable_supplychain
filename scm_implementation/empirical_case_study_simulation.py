@@ -20,20 +20,20 @@ Surgery item usage are based on historical
 
 def run(args):
     seed = 0
-    item_id, b, n, seed = args
+    item_id, b, n, lt, seed = args
     # item_id = "47320"
     # b = 100
     # n = 0
 
-    fn = "scm_implementation/simulation_inputs/ns_policy_id_{}_b_{}_info_{}.pickle".format(item_id, b, n)
+    fn = "scm_implementation/simulation_inputs/ns_policy_id_{}_b_{}_lt_{}_info_{}.pickle".format(item_id, b, n)
     with open(fn, "rb") as f:
         policy = pickle.load(f)
 
     policy = {item_id: AdvancedInfoSsPolicy(item_id, policy)}
-    order_lt = {item_id: GenerateDeterministic(0)}
+    order_lt = {item_id: GenerateDeterministic(lt)}
     #elective_process = EmpiricalElectiveSurgeryDemandProcess(seed=seed)
-    elective_process = EmpiricalElectiveSurgeryDemandProcessWithPoissonUsage(seed=seed)
     #emergency_process = EmpiricalEmergencySurgeryDemandProcess(seed=seed)
+    elective_process = EmpiricalElectiveSurgeryDemandProcessWithPoissonUsage(seed=seed)
     emergency_process = EmpiricalEmergencySurgeryDemandProcessWithPoissonUsage(seed=seed)
 
     hospital = Hospital([item_id],
@@ -41,22 +41,21 @@ def run(args):
                         order_lt,
                         emergency_process,
                         elective_process,
-                        warm_up=0,
+                        warm_up=7,
                         sim_time=365,
-                        end_buffer=0)
+                        end_buffer=7)
 
     hospital.run_simulation()
     hospital.trim_data()
 
     stock_outs = sum(len(d) for d in hospital.full_surgery_backlog)
-
     r = {"item_id": item_id,
-            "backlogging_cost": b,
-            "info_horizon": n,
-            "average_inventory_level": np.mean(hospital.full_inventory_lvl[item_id]),
-            "surgeries_backlogged": stock_outs,
-            "seed": seed
-            }
+         "backlogging_cost": b,
+         "info_horizon": n,
+         "average_inventory_level": np.mean(hospital.full_inventory_lvl[item_id]),
+         "surgeries_backlogged": stock_outs,
+         "seed": seed
+         }
     print("Finished: ", datetime.now().isoformat(), "-", item_id, b, n, seed)
     return r
 
@@ -70,15 +69,16 @@ if __name__ == "__main__":
     pool = Pool(8)
     results = pd.DataFrame()
     item_ids = ["47320", "56931", "1686", "129636", "83532", "38262"]
-    bs = [100, 1000, 10000]
+    bs = [1000, 10000]
 
     all_args = []
 
     for item_id in item_ids:
-        for b in bs:
-            for n in [0, 1]:
-                for seed in range(100):
-                    all_args.append((item_id, b, n, seed))
+        for lt in [0, 1]:
+            for b in bs:
+                for n in [0, 1]:
+                    for seed in range(100):
+                        all_args.append((item_id, b, n, lt, seed))
 
     rs = pool.map(run, all_args)
     for r in rs:

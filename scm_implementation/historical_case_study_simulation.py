@@ -32,11 +32,6 @@ def run(item_id, b, n, lt):
     policy = {item_id: AdvancedInfoSsPolicy(item_id, policy)}
 
     order_lt = {item_id: GenerateDeterministic(lt)}
-    surgery1 = Surgery(
-        "surgery1",
-        {"item_id": 1},
-        {"item_id": GeneratePoisson(8)}
-    )
 
     # To filter out surgeries that exceed a right percentile, include options item_ids=["item_id"], threshold=0.01
     # i.e. HistoricalElectiveSurgeryDemandProcess(item_ids=["item_id"], threshold=0.01)
@@ -57,8 +52,6 @@ def run(item_id, b, n, lt):
     hospital.run_simulation()
     hospital.trim_data()
 
-    average_inventory_level = np.mean(hospital.full_inventory_lvl[item_id])
-    info_horizon = n
     stock_outs = sum(len(d) for d in hospital.full_surgery_backlog)
     return {"item_id": item_id,
             "backlogging_cost": b,
