@@ -1,6 +1,9 @@
 from scm_simulation.hospital import Hospital, EmpiricalElectiveSurgeryDemandProcess, \
-    EmpiricalEmergencySurgeryDemandProcess, EmpiricalEmergencySurgeryDemandProcessWithPoissonUsage, \
-    EmpiricalElectiveSurgeryDemandProcessWithPoissonUsage
+    EmpiricalEmergencySurgeryDemandProcess, ParametricEmergencySurgeryDemandProcessWithPoissonUsage, \
+    ParametricElectiveSurgeryDemandProcessWithPoissonUsage, \
+    ParametricEmergencySurgeryDemandProcessWithTruncatedPoissonUsage, \
+    ParametricElectiveSurgeryDemandProcessWithTruncatedPoissonUsage
+
 from scm_simulation.item import Item
 from scm_simulation.surgery import Surgery
 from scm_simulation.rng_classes import GeneratePoisson, GenerateFromSample, GenerateDeterministic
@@ -9,7 +12,7 @@ import pickle
 import pandas as pd
 import numpy as np
 from multiprocessing import Pool
-from datetime import datetime
+from datetime import datetime, date
 
 """
 Elective and emergency surgeries per day are empirically generated
@@ -31,10 +34,10 @@ def run(args):
 
     policy = {item_id: AdvancedInfoSsPolicy(item_id, policy)}
     order_lt = {item_id: GenerateDeterministic(lt)}
-    #elective_process = EmpiricalElectiveSurgeryDemandProcess(seed=seed)
-    #emergency_process = EmpiricalEmergencySurgeryDemandProcess(seed=seed)
-    elective_process = EmpiricalElectiveSurgeryDemandProcessWithPoissonUsage(seed=seed)
-    emergency_process = EmpiricalEmergencySurgeryDemandProcessWithPoissonUsage(seed=seed)
+    # elective_process = EmpiricalElectiveSurgeryDemandProcess(seed=seed)
+    # emergency_process = EmpiricalEmergencySurgeryDemandProcess(seed=seed)
+    elective_process = ParametricElectiveSurgeryDemandProcessWithPoissonUsage(seed=seed)
+    emergency_process = ParametricEmergencySurgeryDemandProcessWithPoissonUsage(seed=seed)
 
     hospital = Hospital([item_id],
                         policy,
@@ -49,11 +52,15 @@ def run(args):
     hospital.trim_data()
 
     stock_outs = sum(len(d) for d in hospital.full_surgery_backlog)
+    service_level = sum(len(d) for d in hospital.full_elective_schedule) \
+                    + sum(len(d) for d in hospital.full_emergency_schedule)
+    service_level = 1 - stock_outs / service_level
     r = {"item_id": item_id,
          "backlogging_cost": b,
          "info_horizon": n,
          "average_inventory_level": np.mean(hospital.full_inventory_lvl[item_id]),
          "surgeries_backlogged": stock_outs,
+         "service_level": service_level,
          "seed": seed
          }
     print("Finished: ", datetime.now().isoformat(), "-", item_id, b, n, seed)
@@ -70,16 +77,23 @@ if __name__ == "__main__":
     results = pd.DataFrame()
     item_ids = ["47320", "56931", "1686", "129636", "83532", "38262"]
     bs = [1000, 10000]
+    lts = [0, 1]
+    ns = [0, 1, 2]
+
+    # item_ids = ["129636"]
+    # bs = [1000]
+    # lts = [1]
+    # ns = [0, 1, 2]
 
     all_args = []
 
     for item_id in item_ids:
-        for lt in [0, 1]:
+        for lt in lts:
             for b in bs:
-                for n in [0, 1]:
+                for n in ns:
                     for seed in range(100):
                         all_args.append((item_id, b, n, lt, seed))
-    all_args = all_args[0:10]
+    # all_args = all_args[0:10]
     rs = pool.map(run, all_args)
     for r in rs:
         results = results.append(r, ignore_index=True)
@@ -88,7 +102,8 @@ if __name__ == "__main__":
 
     summary = results.groupby(["backlogging_cost", "info_horizon", "item_id"]) \
         .agg({"surgeries_backlogged": ["mean", "std", halfwidth],
-              "average_inventory_level": ["mean", "std", halfwidth]})
-    summary = summary.pivot_table(["average_inventory_level", "surgeries_backlogged"],
+              "average_inventory_level": ["mean", "std", halfwidth],
+              "service_level": ["mean", "std", halfwidth]})
+    summary = summary.pivot_table(["average_inventory_level", "surgeries_backlogged", "service_level"],
                                   ["backlogging_cost", "item_id"], ["info_horizon"])
-    summary.to_csv("empirical_case_study_summary.csv")
+    summary.to_csv(str(date.today()) + "_parametric_case_study_summary.csv")

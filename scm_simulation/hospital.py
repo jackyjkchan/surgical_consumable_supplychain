@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import pickle
-from scm_simulation.rng_classes import GeneratePoisson
+from scm_simulation.rng_classes import GeneratePoisson, GenerateTruncatedPoisson
 
 
 class SurgeryDemandProcess(object):
@@ -27,13 +27,13 @@ class SurgeryDemandProcess(object):
         return surgeries
 
 
-class EmpiricalElectiveSurgeryDemandProcessWithPoissonUsage(SurgeryDemandProcess):
+class ParametricElectiveSurgeryDemandProcessWithPoissonUsage(SurgeryDemandProcess):
     def __init__(self, seed=0):
         with open("scm_implementation/simulation_inputs/historical_surgeries.pickle", "rb") as f:
             self.surgeries = list(pickle.load(f).values())
 
-        with open("scm_implementation/simulation_inputs/empirical_elective_surgery_distribution.pickle", "rb") as f:
-            self.surgeries_per_day_sample = pickle.load(f)
+        #with open("scm_implementation/simulation_inputs/empirical_elective_surgery_distribution.pickle", "rb") as f:
+        #    self.surgeries_per_day_sample = pickle.load(f)
         self.seed = seed
 
         for surgery in self.surgeries:
@@ -42,7 +42,7 @@ class EmpiricalElectiveSurgeryDemandProcessWithPoissonUsage(SurgeryDemandProcess
 
     def generate(self, warm_up=0, end_buffer=1):
         np.random.seed(self.seed)
-        num_surgeries = np.random.choice(self.surgeries_per_day_sample, 365)
+        num_surgeries = np.random.binomial(n=8, p=0.64, size=365)#self.surgeries_per_day_sample, 365)
         surgeries = list(list(np.random.choice(self.surgeries, num)) for num in num_surgeries)
         for i in range(365):
             if (i % 7) in [5, 6]:
@@ -52,7 +52,32 @@ class EmpiricalElectiveSurgeryDemandProcessWithPoissonUsage(SurgeryDemandProcess
         return start_days + surgeries + end_days
 
 
-class EmpiricalEmergencySurgeryDemandProcessWithPoissonUsage(SurgeryDemandProcess):
+class ParametricElectiveSurgeryDemandProcessWithTruncatedPoissonUsage(SurgeryDemandProcess):
+    def __init__(self, seed=0):
+        with open("scm_implementation/simulation_inputs/historical_surgeries.pickle", "rb") as f:
+            self.surgeries = list(pickle.load(f).values())
+
+        with open("scm_implementation/simulation_inputs/empirical_elective_surgery_distribution.pickle", "rb") as f:
+            self.surgeries_per_day_sample = pickle.load(f)
+        self.seed = seed
+
+        for surgery in self.surgeries:
+            surgery.item_usages = {item_id: GenerateTruncatedPoisson(surgery.item_infos[item_id], trunk=1e-3)
+                                   for item_id in surgery.item_infos}
+
+    def generate(self, warm_up=0, end_buffer=1):
+        np.random.seed(self.seed)
+        num_surgeries = np.random.binomial(n=8, p=0.64, size=365)
+        surgeries = list(list(np.random.choice(self.surgeries, num)) for num in num_surgeries)
+        for i in range(365):
+            if (i % 7) in [5, 6]:
+                surgeries[i] = []
+        start_days = [[]] * warm_up
+        end_days = [[]] * end_buffer
+        return start_days + surgeries + end_days
+
+
+class ParametricEmergencySurgeryDemandProcessWithPoissonUsage(SurgeryDemandProcess):
     def __init__(self, seed=0):
         with open("scm_implementation/simulation_inputs/historical_surgeries.pickle", "rb") as f:
             self.surgeries = list(pickle.load(f).values())
@@ -67,12 +92,33 @@ class EmpiricalEmergencySurgeryDemandProcessWithPoissonUsage(SurgeryDemandProces
 
     def generate(self, warm_up=0, end_buffer=1):
         np.random.seed(self.seed)
-        num_surgeries = np.random.choice(self.surgeries_per_day_sample, 365)
+        num_surgeries = np.random.poisson(0.73, 365)
         surgeries = list(list(np.random.choice(self.surgeries, num)) for num in num_surgeries)
         start_days = [[]] * warm_up
         end_days = [[]] * end_buffer
         return start_days + surgeries + end_days
 
+
+class ParametricEmergencySurgeryDemandProcessWithTruncatedPoissonUsage(SurgeryDemandProcess):
+    def __init__(self, seed=0):
+        with open("scm_implementation/simulation_inputs/historical_surgeries.pickle", "rb") as f:
+            self.surgeries = list(pickle.load(f).values())
+
+        with open("scm_implementation/simulation_inputs/empirical_emergency_surgery_distribution.pickle", "rb") as f:
+            self.surgeries_per_day_sample = pickle.load(f)
+
+        for surgery in self.surgeries:
+            surgery.item_usages = {item_id: GenerateTruncatedPoisson(surgery.item_infos[item_id], trunk=1e-3)
+                                   for item_id in surgery.item_infos}
+        self.seed = seed
+
+    def generate(self, warm_up=0, end_buffer=1):
+        np.random.seed(self.seed)
+        num_surgeries = np.random.poisson(0.73, 365)
+        surgeries = list(list(np.random.choice(self.surgeries, num)) for num in num_surgeries)
+        start_days = [[]] * warm_up
+        end_days = [[]] * end_buffer
+        return start_days + surgeries + end_days
 
 class EmpiricalElectiveSurgeryDemandProcess(SurgeryDemandProcess):
     def __init__(self, seed=0):

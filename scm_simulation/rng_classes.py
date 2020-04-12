@@ -1,4 +1,5 @@
 from numpy import mean, random
+from scipy.stats import poisson
 import math
 
 
@@ -42,7 +43,7 @@ class GenerateBinomial(NumberGenerator):
         return random.binomial(self.n, self.p, size=n)
 
     def mean(self):
-        return self.n*self.p
+        return self.n * self.p
 
 
 class GeneratePoisson(NumberGenerator):
@@ -51,6 +52,26 @@ class GeneratePoisson(NumberGenerator):
 
     def gen(self):
         return random.poisson(self.mu)
+
+    def gen_n(self, n):
+        return random.poisson(self.mu, size=n)
+
+    def mean(self):
+        return self.mu
+
+
+class GenerateTruncatedPoisson(NumberGenerator):
+    def __init__(self, mu, trunk):
+        self.mu = mu
+        self.limit = 0
+        while poisson.cdf(self.limit, mu) < 1 - trunk:
+            self.limit += 1
+
+    def gen(self):
+        ret = random.poisson(self.mu)
+        while ret > self.limit:
+            ret = random.poisson(self.mu)
+        return ret
 
     def gen_n(self, n):
         return random.poisson(self.mu, size=n)
@@ -68,7 +89,7 @@ class GenerateDeterministic(NumberGenerator):
         return self.value
 
     def gen_n(self, n):
-        return [self.value]*n
+        return [self.value] * n
 
     def mean(self):
         return self.value
@@ -123,7 +144,7 @@ class GenerateFromLogNormal(NumberGenerator):
             return random.lognormal(self.mu, self.sigma, n)
 
     def mean(self):
-        return math.exp(self.mu + self.sigma**2/2)
+        return math.exp(self.mu + self.sigma ** 2 / 2)
 
     def sample(self, n):
         return [self.gen() for i in range(n)]
@@ -131,6 +152,7 @@ class GenerateFromLogNormal(NumberGenerator):
 
 class GenerateFromScaledLogNormal(NumberGenerator):
     """ x ~ C * x1 where C is a constant and x1 is a LogNormal RV"""
+
     def __init__(self, mu, sigma, c):
         self.mu = mu
         self.sigma = sigma
@@ -143,7 +165,7 @@ class GenerateFromScaledLogNormal(NumberGenerator):
         return self.c * random.lognormal(self.mu, self.sigma, n)
 
     def mean(self):
-        return self.c * math.exp(self.mu + self.sigma**2/2)
+        return self.c * math.exp(self.mu + self.sigma ** 2 / 2)
 
     def sample(self, n):
         return [self.gen() for i in range(n)]
