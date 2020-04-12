@@ -40,14 +40,16 @@ class EmpiricalElectiveSurgeryDemandProcessWithPoissonUsage(SurgeryDemandProcess
             surgery.item_usages = {item_id: GeneratePoisson(surgery.item_infos[item_id])
                                    for item_id in surgery.item_infos}
 
-    def generate(self, start_day=0, days=1):
+    def generate(self, warm_up=0, end_buffer=1):
         np.random.seed(self.seed)
         num_surgeries = np.random.choice(self.surgeries_per_day_sample, 365)
         surgeries = list(list(np.random.choice(self.surgeries, num)) for num in num_surgeries)
         for i in range(365):
             if (i % 7) in [5, 6]:
                 surgeries[i] = []
-        return surgeries
+        start_days = [[]] * warm_up
+        end_days = [[]] * end_buffer
+        return start_days + surgeries + end_days
 
 
 class EmpiricalEmergencySurgeryDemandProcessWithPoissonUsage(SurgeryDemandProcess):
@@ -63,12 +65,13 @@ class EmpiricalEmergencySurgeryDemandProcessWithPoissonUsage(SurgeryDemandProces
                                    for item_id in surgery.item_infos}
         self.seed = seed
 
-    def generate(self, start_day=0, days=1):
+    def generate(self, warm_up=0, end_buffer=1):
         np.random.seed(self.seed)
         num_surgeries = np.random.choice(self.surgeries_per_day_sample, 365)
         surgeries = list(list(np.random.choice(self.surgeries, num)) for num in num_surgeries)
-
-        return surgeries
+        start_days = [[]] * warm_up
+        end_days = [[]] * end_buffer
+        return start_days + surgeries + end_days
 
 
 class EmpiricalElectiveSurgeryDemandProcess(SurgeryDemandProcess):

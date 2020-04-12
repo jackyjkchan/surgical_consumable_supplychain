@@ -25,7 +25,7 @@ def run(args):
     # b = 100
     # n = 0
 
-    fn = "scm_implementation/simulation_inputs/ns_policy_id_{}_b_{}_lt_{}_info_{}.pickle".format(item_id, b, n)
+    fn = "scm_implementation/simulation_inputs/ns_policy_id_{}_b_{}_lt_{}_info_{}.pickle".format(item_id, b, lt, n)
     with open(fn, "rb") as f:
         policy = pickle.load(f)
 
@@ -79,7 +79,7 @@ if __name__ == "__main__":
                 for n in [0, 1]:
                     for seed in range(100):
                         all_args.append((item_id, b, n, lt, seed))
-
+    all_args = all_args[0:10]
     rs = pool.map(run, all_args)
     for r in rs:
         results = results.append(r, ignore_index=True)
