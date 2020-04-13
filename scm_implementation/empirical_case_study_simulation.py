@@ -36,6 +36,8 @@ def run(args):
     order_lt = {item_id: GenerateDeterministic(lt)}
     # elective_process = EmpiricalElectiveSurgeryDemandProcess(seed=seed)
     # emergency_process = EmpiricalEmergencySurgeryDemandProcess(seed=seed)
+    # elective_process = ParametricElectiveSurgeryDemandProcessWithPoissonUsage(seed=seed)
+    # emergency_process = ParametricEmergencySurgeryDemandProcessWithPoissonUsage(seed=seed)
     elective_process = ParametricElectiveSurgeryDemandProcessWithTruncatedPoissonUsage(seed=seed)
     emergency_process = ParametricEmergencySurgeryDemandProcessWithTruncatedPoissonUsage(seed=seed)
 
@@ -107,4 +109,4 @@ if __name__ == "__main__":
               "service_level": ["mean", "std", halfwidth]})
     summary = summary.pivot_table(["average_inventory_level", "surgeries_backlogged", "service_level"],
                                   ["backlogging_cost", "lead_time", "item_id"], ["info_horizon"])
-    summary.to_csv(str(date.today()) + "_parametric_case_study_summary.csv")
+    summary.to_csv(str(date.today()) + "_parametric_case_study_summary_truncated.csv")
