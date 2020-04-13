@@ -36,8 +36,8 @@ def run(args):
     order_lt = {item_id: GenerateDeterministic(lt)}
     # elective_process = EmpiricalElectiveSurgeryDemandProcess(seed=seed)
     # emergency_process = EmpiricalEmergencySurgeryDemandProcess(seed=seed)
-    elective_process = ParametricElectiveSurgeryDemandProcessWithPoissonUsage(seed=seed)
-    emergency_process = ParametricEmergencySurgeryDemandProcessWithPoissonUsage(seed=seed)
+    elective_process = ParametricElectiveSurgeryDemandProcessWithTruncatedPoissonUsage(seed=seed)
+    emergency_process = ParametricEmergencySurgeryDemandProcessWithTruncatedPoissonUsage(seed=seed)
 
     hospital = Hospital([item_id],
                         policy,
@@ -58,6 +58,7 @@ def run(args):
     r = {"item_id": item_id,
          "backlogging_cost": b,
          "info_horizon": n,
+         "lead_time": lt,
          "average_inventory_level": np.mean(hospital.full_inventory_lvl[item_id]),
          "surgeries_backlogged": stock_outs,
          "service_level": service_level,
@@ -100,10 +101,10 @@ if __name__ == "__main__":
 
     results.to_csv("empirical_case_study_results.csv")
 
-    summary = results.groupby(["backlogging_cost", "info_horizon", "item_id"]) \
+    summary = results.groupby(["backlogging_cost", "info_horizon", "lead_time", "item_id"]) \
         .agg({"surgeries_backlogged": ["mean", "std", halfwidth],
               "average_inventory_level": ["mean", "std", halfwidth],
               "service_level": ["mean", "std", halfwidth]})
     summary = summary.pivot_table(["average_inventory_level", "surgeries_backlogged", "service_level"],
-                                  ["backlogging_cost", "item_id"], ["info_horizon"])
+                                  ["backlogging_cost", "lead_time", "item_id"], ["info_horizon"])
     summary.to_csv(str(date.today()) + "_parametric_case_study_summary.csv")
