@@ -27,6 +27,7 @@ class ModelConfig:
                  horizon=None,
                  increments=1,
                  usage_model=PoissonUsageModel(scale=1),
+                 detailed=False,
                  label=None,
                  label_index=None):
 
@@ -45,6 +46,7 @@ class ModelConfig:
         self.label = label
         self.sub_label = "{}_{}_{}".format(date.today().isoformat(), label, str(label_index))
         self.results_fn = self.sub_label + ".pickle"
+        self.detailed = detailed
 
         self.params = dict(
             gamma=gamma,
@@ -169,7 +171,8 @@ class NonStationaryOptModel(StationaryOptModel):
                  setup_cost,
                  unit_price,
                  usage_model=None,
-                 increments=1
+                 increments=1,
+                 detailed=False
                  ):
 
         # parameters in order:
@@ -177,7 +180,7 @@ class NonStationaryOptModel(StationaryOptModel):
         # lead time for items to arrive, >= 0
         # information horizon N >= 0, N = 0 for no advanced information
         # vector of random variables, transition of the state of advanced information, M_{t, s} in notation
-
+        self.detailed = detailed
         self.gamma = gamma
         self.lead_time = lead_time
         self.ns_info_state_rvs = ns_info_state_rvs
@@ -369,13 +372,14 @@ class NonStationaryOptModel(StationaryOptModel):
         value = self.G(rt, y, o) + self.gamma * sum(p * self.j_function(*state)
                                                     for p, state in zip(probabilities, new_states))
 
-        self.v_b[(t, y, o)] = self.G_b(rt, y, o) + self.gamma * sum(p * self.j_function_b(*state)
-                                                                    for p, state in zip(probabilities, new_states))
-        self.v_h[(t, y, o)] = self.G_h(rt, y, o) + self.gamma * sum(p * self.j_function_h(*state)
-                                                                    for p, state in zip(probabilities, new_states))
-        self.v_p[(t, y, o)] = self.G_p(rt, y, o) + self.gamma * sum(p * self.j_function_p(*state)
-                                                                    for p, state in zip(probabilities, new_states))
-        self.v_k[(t, y, o)] = self.gamma * sum(p * self.j_function_k(*state)
-                                               for p, state in zip(probabilities, new_states))
+        if self.detailed:
+            self.v_b[(t, y, o)] = self.G_b(rt, y, o) + self.gamma * sum(p * self.j_function_b(*state)
+                                                                        for p, state in zip(probabilities, new_states))
+            self.v_h[(t, y, o)] = self.G_h(rt, y, o) + self.gamma * sum(p * self.j_function_h(*state)
+                                                                        for p, state in zip(probabilities, new_states))
+            self.v_p[(t, y, o)] = self.G_p(rt, y, o) + self.gamma * sum(p * self.j_function_p(*state)
+                                                                        for p, state in zip(probabilities, new_states))
+            self.v_k[(t, y, o)] = self.gamma * sum(p * self.j_function_k(*state)
+                                                   for p, state in zip(probabilities, new_states))
         self.value_function_v[(t, y, o)] = value
         return value
