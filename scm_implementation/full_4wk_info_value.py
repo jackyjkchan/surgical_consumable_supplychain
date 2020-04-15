@@ -19,6 +19,7 @@ def run_model_info(arg):
         x = 0
         o_t = info[-t - 1:] + tuple([0] * (28 - t - 1))
         j_value = model.j_function(t, x, o_t)
+    print("Complete one sample path")
     return j_value
 
 
@@ -30,6 +31,7 @@ def gen_scenario(rv):
 
 
 if __name__ == "__main__":
+    p = Pool(8)
     # case study items, 47320, 56931, 1686, 129636, 83532, 38262
     repetitions = 100
     configs = []
@@ -40,7 +42,7 @@ if __name__ == "__main__":
     #for item_id in ["47320"]:
         for b in [1000, 10000]:
         #for b in [100]:
-            for lt in [0, 1]:
+            for lt in [1]:
             #for lt in [1]:
                 config = ns_model.ModelConfig(gamma=1,
                                               lead_time=lt,
@@ -69,7 +71,7 @@ if __name__ == "__main__":
                               config.params["unit_price"])
                 model = NonStationaryOptModel(*model_args)
 
-                p = Pool(8)
+
 
                 models = list(NonStationaryOptModel(*model_args) for _ in range(repetitions))
                 info_scenarios = list(gen_scenario(elective_info_rvs[item_id]) for _ in range(repetitions))
