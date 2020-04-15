@@ -30,7 +30,8 @@ class AdvancedInfoSsPolicy(OrderPolicy):
         iid = self.item_id
         ts = range(hospital.clock, hospital.clock + self.info_horizon)
         # Extract info state from hospital for item using elective schedule
-        info_state = (sum(surgery.item_infos[iid] for surgery in hospital.full_elective_schedule[t]) for t in ts)
+        info_state = list(sum(surgery.item_infos[iid] for surgery in hospital.full_elective_schedule[t]) for t in ts)
+        info_state[0] = info_state[0] + sum(surgery.item_infos[iid] for surgery in hospital.curr_surgery_backlog)
         # Round to granularity
         info_state = tuple(round(info / self.granularity) * self.granularity for info in info_state)
         # Cap to policy max levels

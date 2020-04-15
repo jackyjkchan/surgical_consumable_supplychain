@@ -51,14 +51,18 @@ def run(item_id, b, n, lt):
 
     hospital.run_simulation()
     hospital.trim_data()
-
     stock_outs = sum(len(d) for d in hospital.full_surgery_backlog)
+    service_level = sum(len(d) for d in hospital.full_elective_schedule) \
+                    + sum(len(d) for d in hospital.full_emergency_schedule)
+    service_level = 1 - stock_outs / service_level
+
     return {"item_id": item_id,
             "backlogging_cost": b,
             "info_horizon": n,
             "lead_time": lt,
             "average_inventory_level": np.mean(hospital.full_inventory_lvl[item_id]),
-            "surgeries_backlogged": stock_outs
+            "surgeries_backlogged": stock_outs,
+            "service_level": service_level
             }
 
 
