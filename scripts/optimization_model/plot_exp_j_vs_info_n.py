@@ -14,7 +14,7 @@ from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
 plotly.io.orca.config.executable = 'C:\\Users\\Jacky\\AppData\\Local\\Programs\\orca\\orca.exe'
 from scripts.optimization_model.model_configs import action_increment_configs
 
-normalize = True
+normalize = False
 "scm_implementation/results/2020-01-22_ns_impl_38262.pickle"
 "scm_implementation/results/2020-01-22_ns_impl_83532.pickle"
 "scm_implementation/results/2020-01-22_ns_impl_129636.pickle"
@@ -23,7 +23,7 @@ normalize = True
 "scm_implementation/results/2020-01-22_ns_impl_56931.pickle"
 
 data = pd.read_pickle(
-    "publish/2020-03-20_demand_scale_experiment.pickle"
+    "scm_implementation/results/2020-04-08_ns_impl_LT_1_47320.pickle"
 )
 
 graph_data_export = {"traces": {}}
