@@ -110,27 +110,38 @@ def run_config(args):
             for o in model.info_states()[rt]:
                 info_p = model.get_info_state_prob(t, o)
                 j_value = model.j_function(t, x, o)
-                #print(t, x, o, j_value)
-                j_k = model.j_function_k(t, x, o)
-                j_b = model.j_function_b(t, x, o)
-                j_h = model.j_function_h(t, x, o)
-                j_p = model.j_function_p(t, x, o)
                 base_stock = model.base_stock_level(t, o)
                 stock_up = model.stock_up_level(t, o)
-
                 result = dict(config.params)
-                result.update({'label': config.label,
-                               't': t,
-                               'inventory_position_state': x,
-                               'information_state': o,
-                               'information_state_p': info_p,
-                               'j_value_function': j_value,
-                               'j_k': j_k,
-                               'j_b': j_b,
-                               'j_h': j_h,
-                               'j_p': j_p,
-                               'base_stock': base_stock,
-                               'order_up_to': stock_up})
+                #print(t, x, o, j_value)
+                if model.detailed:
+                    j_k = model.j_function_k(t, x, o)
+                    j_b = model.j_function_b(t, x, o)
+                    j_h = model.j_function_h(t, x, o)
+                    j_p = model.j_function_p(t, x, o)
+
+                    result.update({'label': config.label,
+                                   't': t,
+                                   'inventory_position_state': x,
+                                   'information_state': o,
+                                   'information_state_p': info_p,
+                                   'j_value_function': j_value,
+                                   'j_k': j_k,
+                                   'j_b': j_b,
+                                   'j_h': j_h,
+                                   'j_p': j_p,
+                                   'base_stock': base_stock,
+                                   'order_up_to': stock_up})
+                else:
+                    result.update({'label': config.label,
+                                   't': t,
+                                   'inventory_position_state': x,
+                                   'information_state': o,
+                                   'information_state_p': info_p,
+                                   'j_value_function': j_value,
+                                   'base_stock': base_stock,
+                                   'order_up_to': stock_up})
+
                 results = results.append(result, ignore_index=True)
         results.to_pickle(config.results_fn)
     print("Finished {}: {}".format(config.sub_label, datetime.now().isoformat()))
