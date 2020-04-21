@@ -5,6 +5,7 @@ from scm_analytics.config import lhs_config
 import datetime
 import plotly.graph_objs as go
 from plotly.offline import plot
+import numpy as np
 
 from scripts.usage_regression.usage_regression import CASE_STUDY_ITEMS, HIGH_USAGE_ITEMS, MED_USAGE_ITEMS, \
     LOW_USAGE_ITEMS
@@ -36,35 +37,51 @@ def run(case_service="Cardiac Surgery",
     usage_dist = surgery_df.groupby(["procedures"]).agg({"used_qty": lambda x: list(x)}).reset_index()
     usage_dist["occurrences"] = usage_dist["used_qty"].apply(lambda x: len(x))
     usage_dist = usage_dist[usage_dist["occurrences"] > 25]
+    usage_dist["mean"] = usage_dist["used_qty"].apply(lambda x: np.mean(x))
+    usage_dist["variance"] = usage_dist["used_qty"].apply(lambda x: np.var(x, ddof=1))
+    usage_dist["var/mean"] = usage_dist["variance"] / usage_dist["mean"]
 
     traces = []
+    x_max = 0
     for i in range(len(usage_dist)):
         case = usage_dist.iloc[i]["procedures"]
         data = usage_dist.iloc[i]["used_qty"]
         label = ", ".join(case)
-
+        end = max(usage_dist.iloc[i]["used_qty"]) + 1
         traces.append(go.Histogram(
             x=data,
             name=label,
             xbins=dict(
                 start=0,
-                end=max(usage_dist.iloc[i]["used_qty"]) + 1,
+                end=end,
                 size=1
             ),
             histnorm='probability',
             opacity=0.75
         ))
+        x_max = int(end) if end > x_max else x_max
 
-    layout = go.Layout(title="Item: {} Empirical Usage Distribution for common cases".format(item_id),
-                       xaxis={'title': 'Used Qty'},
-                       yaxis={'title': 'Probability'})
+    tickvals = list(x + 0.5 for x in range(x_max))
+    ticktext = list(str(x) for x in range(x_max))
+    layout = go.Layout(  # title="Item: {} Empirical Usage Distribution for common cases".format(item_id),
+        xaxis={'title': 'Used Qty',
+               'tickvals': tickvals,
+               'ticktext': ticktext},
+        yaxis={'title': 'Probability'},
+        font={"size": 12},
+        plot_bgcolor="white")
     figure = go.Figure(
         data=traces,
-        layout=layout
+        layout=layout,
     )
+    # figure.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgrey')
+    figure.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgrey')
     plot(figure, filename="{}_empircal_usage_distribution.html".format(item_id))
+    usage_dist.to_csv("{}_empircal_usage_distribution.csv".format(item_id))
 
 
 if __name__ == "__main__":
-    for item_id in CASE_STUDY_ITEMS:
-        run(item_id=item_id)
+    item_id = "83105"
+    run(item_id=item_id)
+    # for item_id in CASE_STUDY_ITEMS:
+    #    run(item_id=item_id)

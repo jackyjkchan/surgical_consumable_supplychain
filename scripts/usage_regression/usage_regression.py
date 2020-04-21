@@ -20,7 +20,7 @@ LOW_USAGE_ITEMS = ["83532", "44748", "38238", "14205", "36551", "82916", "2997",
                    "38141", "38261", "38262", "36190"]
 BAD_USAGE = ["62070", "382"]
 CASE_STUDY_ITEMS = ["47320", "56931", "1686", "129636", "83532", "38262"]
-
+CASE_STUDY_ITEMS_SET2 = ["83106", "83105"]
 # 129636, 1686, 44744, 38242 SUPER GOOD FOR POISSON
 
 
@@ -188,7 +188,7 @@ def test_usage_r_regression_flow(item_id=None, save_results=False):
 
 if __name__ == "__main__":
     run_summary = pd.DataFrame()
-    for id in CASE_STUDY_ITEMS:
+    for id in CASE_STUDY_ITEMS_SET2:
        print("ITEM ID:", id)
        row = test_usage_r_regression_flow(item_id=id, save_results=True)
        run_summary = run_summary.append(row, ignore_index=True)
