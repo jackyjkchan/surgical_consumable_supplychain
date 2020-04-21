@@ -62,6 +62,7 @@ def run(args):
          "info_horizon": n,
          "lead_time": lt,
          "average_inventory_level": np.mean(hospital.full_inventory_lvl[item_id]),
+         "full_inventory_lvl": hospital.full_inventory_lvl[item_id],
          "surgeries_backlogged": stock_outs,
          "service_level": service_level,
          "seed": seed
@@ -76,11 +77,12 @@ if __name__ == "__main__":
         return 1.96 * np.std(series) / np.sqrt(len(series))
 
 
-    pool = Pool(8)
+    pool = Pool(10)
     results = pd.DataFrame()
     item_ids = ["47320", "56931", "1686", "129636", "83532", "38262"]
-    bs = [1000, 10000]
-    lts = [0, 1]
+    item_ids = ["47320"]
+    bs = [10000]
+    lts = [1]
     ns = [0, 1, 2]
 
     # item_ids = ["129636"]
@@ -94,19 +96,19 @@ if __name__ == "__main__":
         for lt in lts:
             for b in bs:
                 for n in ns:
-                    for seed in range(100):
+                    for seed in range(0, 500):
                         all_args.append((item_id, b, n, lt, seed))
     # all_args = all_args[0:10]
     rs = pool.map(run, all_args)
     for r in rs:
         results = results.append(r, ignore_index=True)
 
-    results.to_csv("empirical_case_study_results.csv")
+    results.to_pickle(str(date.today()) + "_parametric_case_studyfull_inventory_500.pickle")
 
-    summary = results.groupby(["backlogging_cost", "info_horizon", "lead_time", "item_id"]) \
-        .agg({"surgeries_backlogged": ["mean", "std", halfwidth],
-              "average_inventory_level": ["mean", "std", halfwidth],
-              "service_level": ["mean", "std", halfwidth]})
-    summary = summary.pivot_table(["average_inventory_level", "surgeries_backlogged", "service_level"],
-                                  ["backlogging_cost", "lead_time", "item_id"], ["info_horizon"])
-    summary.to_csv(str(date.today()) + "_parametric_case_study_summary_truncated.csv")
+    # summary = results.groupby(["backlogging_cost", "info_horizon", "lead_time", "item_id"]) \
+    #     .agg({"surgeries_backlogged": ["mean", "std", halfwidth],
+    #           "average_inventory_level": ["mean", "std", halfwidth],
+    #           "service_level": ["mean", "std", halfwidth]})
+    # summary = summary.pivot_table(["average_inventory_level", "surgeries_backlogged", "service_level"],
+    #                               ["backlogging_cost", "lead_time", "item_id"], ["info_horizon"])
+    # summary.to_csv(str(date.today()) + "_parametric_case_study_summary_truncated_100-500.csv")
