@@ -39,6 +39,7 @@ def run(case_service="Cardiac Surgery",
     usage_dist = usage_dist[usage_dist["occurrences"] > 25]
     usage_dist["mean"] = usage_dist["used_qty"].apply(lambda x: np.mean(x))
     usage_dist["variance"] = usage_dist["used_qty"].apply(lambda x: np.var(x, ddof=1))
+    usage_dist["var/mean"] = usage_dist["variance"] / usage_dist["mean"]
 
     traces = []
     x_max = 0
@@ -61,26 +62,26 @@ def run(case_service="Cardiac Surgery",
         x_max = int(end) if end > x_max else x_max
 
     tickvals = list(x + 0.5 for x in range(x_max))
-    ticktext = list(str(x)  for x in range(x_max))
-    layout = go.Layout(#title="Item: {} Empirical Usage Distribution for common cases".format(item_id),
-                       xaxis={'title': 'Used Qty',
-                              'tickvals': tickvals,
-                              'ticktext': ticktext},
-                       yaxis={'title': 'Probability'},
-                       font={"size": 12},
-                       plot_bgcolor="white")
+    ticktext = list(str(x) for x in range(x_max))
+    layout = go.Layout(  # title="Item: {} Empirical Usage Distribution for common cases".format(item_id),
+        xaxis={'title': 'Used Qty',
+               'tickvals': tickvals,
+               'ticktext': ticktext},
+        yaxis={'title': 'Probability'},
+        font={"size": 12},
+        plot_bgcolor="white")
     figure = go.Figure(
         data=traces,
         layout=layout,
     )
-    #figure.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgrey')
+    # figure.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgrey')
     figure.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgrey')
     plot(figure, filename="{}_empircal_usage_distribution.html".format(item_id))
     usage_dist.to_csv("{}_empircal_usage_distribution.csv".format(item_id))
 
 
 if __name__ == "__main__":
-    item_id="47320"
+    item_id = "83105"
     run(item_id=item_id)
-    #for item_id in CASE_STUDY_ITEMS:
+    # for item_id in CASE_STUDY_ITEMS:
     #    run(item_id=item_id)

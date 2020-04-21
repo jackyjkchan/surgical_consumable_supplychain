@@ -21,9 +21,9 @@ from scm_analytics import ScmAnalytics, Analytics
 from scm_analytics.config import lhs_config
 import datetime
 
-item_ids = ["47320", "56931", "1686", "129636", "83532", "38262"]
+item_ids = ["47320", "56931", "1686", "129636", "83532", "38262", "83105", "83106"]
 case_service = "Cardiac Surgery"
-item_id = "47320"
+#item_id = "47320"
 analytics = ScmAnalytics.ScmAnalytics(lhs_config)
 
 case_service_filter = [{"dim": "case_service",
