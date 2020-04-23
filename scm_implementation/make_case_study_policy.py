@@ -16,12 +16,14 @@ from scripts.optimization_model.model_configs import action_increment_configs
 "scm_implementation/results/2020-01-22_ns_impl_83532.pickle"
 "scm_implementation/results/2020-01-22_ns_impl_129636.pickle"
 item_ids = ["47320", "56931", "1686", "129636", "83532", "38262"]
+item_ids = ["83105", "83106"]
+
 l = 0
 
 
 for item_id in item_ids:
     data = pd.read_pickle(
-        "scm_implementation/results/2020-01-22_ns_impl_{}.pickle".format(item_id))
+        "scm_implementation/results/2020-04-22_ns_impl_LT_0_{}.pickle".format(item_id))
     #data = pd.read_pickle(
     #    "scm_implementation/results/2020-04-08_ns_impl_LT_1_{}.pickle".format(item_id))
     leadtimes = set(data["lead_time"])
