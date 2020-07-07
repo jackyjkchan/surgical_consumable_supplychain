@@ -19,7 +19,7 @@ import datetime
 
 def boostrap_info_process(item_id="38242"):
     case_service = "Cardiac Surgery"
-    #item_id = "38242"
+    #item_id = "3824ns_info_state_rvs2"
     info_granularity = 1
     eps_trunk = 1e-3
 

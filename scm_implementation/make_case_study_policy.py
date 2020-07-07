@@ -24,8 +24,8 @@ l = 1
 for item_id in item_ids:
     data = pd.read_pickle(
         "scm_implementation/results/2020-04-23_ns_impl_LT_0_{}.pickle".format(item_id))
-    #data = pd.read_pickle(
-    #    "scm_implementation/results/2020-04-08_ns_impl_LT_1_{}.pickle".format(item_id))
+    # data = pd.read_pickle(
+    #    "scm_implementation/results/2020-04-23_ns_impl_LT_1_{}.pickle".format(item_id))
     leadtimes = set(data["lead_time"])
     ts = [max(data["t"]) - i for i in range(7)]
     bs = set(data["backlogging_cost"])

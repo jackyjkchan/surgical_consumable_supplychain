@@ -23,7 +23,7 @@ normalize = True
 "scm_implementation/results/2020-01-22_ns_impl_56931.pickle"
 
 data = pd.read_pickle(
-    "scm_implementation/results/2020-04-23_ns_impl_LT_1_83105.pickle"
+    "publish/2020-07-07_base_experiment.pickle"
 )
 
 graph_data_export = {"traces": {}}
@@ -94,7 +94,7 @@ figure = go.Figure(
 
 plot(figure,
      filename="Expected_Cost_For_Various_Levels_of_Advanced_Information_{}.html".format(date.today().isoformat()))
-pickle.dump(graph_data_export, open("graph_data.pickle", "wb"))
+pickle.dump(graph_data_export, open("2020-07-07_base_experiment_graph_dat.pickle", "wb"))
 
 ### Plot marginal cost reduction
 traces = []

@@ -35,7 +35,7 @@ def test_usage_r_regression_flow(item_id=None, save_results=False):
     case_service = "Cardiac Surgery"
     item_id = item_id if item_id else "38242"
     pthres = 0.05
-    occ_thres = 8
+    occ_thres = 5
     tail_trim = 0.01
 
     analytics = ScmAnalytics.ScmAnalytics(lhs_config)
@@ -188,7 +188,8 @@ def test_usage_r_regression_flow(item_id=None, save_results=False):
 
 if __name__ == "__main__":
     run_summary = pd.DataFrame()
-    for id in CASE_STUDY_ITEMS_SET2:
+    #for id in CASE_STUDY_ITEMS_SET2:
+    for id in ["83106"]:
        print("ITEM ID:", id)
        row = test_usage_r_regression_flow(item_id=id, save_results=True)
        run_summary = run_summary.append(row, ignore_index=True)

@@ -16,7 +16,7 @@ One trajectory, one realization
 """
 
 
-item_ids = ["47320", "56931", "1686", "129636", "83532", "38262"]
+item_ids = ["47320", "56931", "1686", "129636", "83532", "38262", "83105", "83106"]
 bs = [1000, 10000]
 
 
@@ -35,10 +35,10 @@ def run(item_id, b, n, lt):
 
     # To filter out surgeries that exceed a right percentile, include options item_ids=["item_id"], threshold=0.01
     # i.e. HistoricalElectiveSurgeryDemandProcess(item_ids=["item_id"], threshold=0.01)
-    #elective_process = HistoricalElectiveSurgeryDemandProcess(item_ids=[item_id], threshold=0.01)
-    #emergency_process = HistoricalEmergencySurgeryDemandProcess(item_ids=[item_id], threshold=0.01)
-    elective_process = HistoricalElectiveSurgeryDemandProcess()
-    emergency_process = HistoricalEmergencySurgeryDemandProcess()
+    elective_process = HistoricalElectiveSurgeryDemandProcess(item_ids=[item_id], threshold=0.01)
+    emergency_process = HistoricalEmergencySurgeryDemandProcess(item_ids=[item_id], threshold=0.01)
+    # elective_process = HistoricalElectiveSurgeryDemandProcess()
+    # emergency_process = HistoricalEmergencySurgeryDemandProcess()
 
     hospital = Hospital([item_id],
                         policy,

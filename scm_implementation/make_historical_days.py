@@ -31,12 +31,12 @@ case_service_filter = [{"dim": "case_service",
                         "val": case_service
                         }]
 usage_events = set(analytics.usage_df["event_id"])
-surgery_df = surgery_df = Analytics \
+surgery_df = Analytics \
     .process_filters(analytics.surgery_df,
                      filters=case_service_filter) \
     .drop_duplicates("event_id", keep="last")
 surgery_df = surgery_df[surgery_df["event_id"].isin(usage_events)].sort_values(by="start_date")
-surgery_df["weekday"] = surgery_df["start_date"].apply(lambda x: x.isoweekday()-1)
+surgery_df["weekday"] = surgery_df["start_date"].apply(lambda x: x.isoweekday() - 1)
 start = surgery_df[surgery_df["weekday"] == 0].iloc[0]["start_date"]
 surgery_df = surgery_df[surgery_df["start_date"] >= start]
 
@@ -60,3 +60,36 @@ with open("scm_implementation/simulation_inputs/historical_elective_schedule.pic
 
 with open("scm_implementation/simulation_inputs/historical_emergency_schedule.pickle", "wb") as f:
     pickle.dump(historical_emergency_schedule, f)
+
+# dump schedule to debug 83106 regression model
+if True:
+    item_id = '83106'
+    regression_info = pd.DataFrame()
+    ids = surgery_objects.keys()
+
+    regression_info = pd.DataFrame.from_dict(
+        {"event_id": list(ids),
+         "realized_usage": list(surgery_objects[id].item_usages[item_id].gen() for id in ids),
+         "expected_usage": list(surgery_objects[id].item_infos[item_id] for id in ids)}
+    )
+
+    case_cart_df = analytics.case_cart_df
+    case_cart_df = case_cart_df[case_cart_df["item_id"] == item_id][["event_id", "fill_qty", "open_qty", "hold_qty"]]
+    case_cart_df = case_cart_df.drop_duplicates(subset="event_id", keep='last')
+    surgery_df = surgery_df.join(regression_info.set_index("event_id"), on="event_id", how="left")
+    surgery_df = surgery_df.join(case_cart_df.set_index("event_id"), on="event_id", how="left")
+
+
+
+    dump_df = surgery_df[["event_id",
+                          "day_index",
+                          "urgent_elective",
+                          "scheduled_procedures",
+                          "completed_procedures",
+                          "RegistrationAttendingPhysicianId",
+                          "fill_qty",
+                          "open_qty",
+                          "hold_qty",
+                          "expected_usage",
+                          "realized_usage"]]
+    dump_df.to_csv("historical_surgery_83106.csv")

@@ -2,6 +2,9 @@ import pandas as pd
 import numpy as np
 
 data = pd.read_csv("publish/case_study/2020-04-15_parametric_case_study_results_500.csv")
+data_catheter = pd.read_pickle("publish/case_study/2020-04-23_parametric_case_study_catheters.pickle")
+data = pd.concat([data, data_catheter])
+
 data["cost"] = data["average_inventory_level"] * 365 + data["surgeries_backlogged"] * data["backlogging_cost"]
 data["info_horizon"] = data["info_horizon"].apply(lambda x: str(int(x)))
 
@@ -60,4 +63,4 @@ publish_col = ["average_inventory_level_0",
                "inv_reduced_2"
                ]
 
-summary.to_csv("publish/case_study/2020-04-15_parametric_case_study_truncated_publish_table.csv")
+summary.to_csv("publish/case_study/2020-05-04_parametric_case_study_truncated_publish_table.csv")

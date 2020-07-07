@@ -7,6 +7,7 @@ import plotly.graph_objs as go
 from plotly.offline import plot
 import numpy as np
 import plotly
+import matplotlib.pyplot as plt
 
 plotly.io.orca.config.executable = 'C:\\Users\\Jacky\\AppData\\Local\\Programs\\orca\\orca.exe'
 
@@ -43,55 +44,69 @@ def run(case_service="Cardiac Surgery",
     data = surgery_df["used_qty"]
     label = ", ".join(procedure_set)
     fn = "__".join(procedure_set)
-    fn = "Usage_Dist_item_" + item_id + "_" + fn.replace(" ", "_") + ".svg"
+    fn = "Usage_Dist_item_" + item_id + "_" + fn.replace(" ", "_")
+    #
+    # traces.append(go.Histogram(
+    #     x=data,
+    #     name=label,
+    #     xbins=dict(
+    #         start=0,
+    #         end=x_max,
+    #         size=1
+    #     ),
+    #     histnorm='probability',
+    #     opacity=1,
+    #
+    # ))
+    #
+    # tickvals = list(x + 0.5 for x in range(x_max))
+    # ticktext = list(str(x) for x in range(x_max))
+    # layout = go.Layout(  # title="Item: {} Empirical Usage Distribution for common cases".format(item_id),
+    #     xaxis={'title': 'Used Qty',
+    #            'tickvals': tickvals,
+    #            'ticktext': ticktext},
+    #     yaxis={'title': 'Probability'},
+    #     font={"size": 16},
+    #     plot_bgcolor="white",
+    #     bargap=0.2)
+    # figure = go.Figure(
+    #     data=traces,
+    #     layout=layout,
+    # )
+    # # figure.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgrey')
+    # figure.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgrey')
+    # # plot(figure, filename="{}_empircal_usage_distribution.html".format(item_id))
+    # figure.write_image(fn, width=900, height=600)
 
-    traces.append(go.Histogram(
-        x=data,
-        name=label,
-        xbins=dict(
-            start=0,
-            end=x_max,
-            size=1
-        ),
-        histnorm='probability',
-        opacity=0.75,
+    import matplotlib
+    matplotlib.rcParams.update({'font.size': 12})
+    plt.figure(figsize=(5.5, 5))
+    n, bins, patches = plt.hist(data, range(x_max+1), density=True, facecolor='#08306b', rwidth=0.95)
+    #plt.yticks([0, 0.2, 0.4, 0.6, 0.8, 1.0])
+    #matplotlib.pyplot.grid(b=True, which='major', axis='y')
+    plt.ylabel("Probability")
+    plt.xlabel("Used Quantity")
+    plt.xticks(range(x_max+1))
+    plt.savefig(fn+".svg", format='svg')
+    plt.savefig(fn+".eps", format='eps')
 
-    ))
-
-    tickvals = list(x + 0.5 for x in range(x_max))
-    ticktext = list(str(x) for x in range(x_max))
-    layout = go.Layout(  # title="Item: {} Empirical Usage Distribution for common cases".format(item_id),
-        xaxis={'title': 'Used Qty',
-               'tickvals': tickvals,
-               'ticktext': ticktext},
-        yaxis={'title': 'Probability'},
-        font={"size": 16},
-        plot_bgcolor="white",
-        bargap=0.2)
-    figure = go.Figure(
-        data=traces,
-        layout=layout,
-    )
-    # figure.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgrey')
-    figure.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgrey')
-    # plot(figure, filename="{}_empircal_usage_distribution.html".format(item_id))
-    figure.write_image(fn, width=900, height=600)
 
 
 if __name__ == "__main__":
-    # item_id = "47320"
-    # procedure_sets = [frozenset({'cabg triple'}),
-    #                   frozenset({'ita', 'esvh', 'cabg triple'})]
-    # for procedure_set in procedure_sets:
-    #     run(item_id=item_id,
-    #         procedure_set=procedure_set)
+    item_id = "47320"
+    procedure_sets = [frozenset({'cabg triple'}),
+                      frozenset({'ita', 'esvh', 'cabg triple'})]
+    for procedure_set in procedure_sets:
+        run(item_id=item_id,
+            procedure_set=procedure_set)
 
-    # item_id = "1686"
-    # procedure_sets = [frozenset({'aortic valve'})]
-    # for procedure_set in procedure_sets:
-    #     run(item_id=item_id,
-    #         procedure_set=procedure_set)
+    item_id = "1686"
+    procedure_sets = [frozenset({'cabg triple', 'esvh', 'radial artery harvesting endoscopic', 'ita'}),
+                      frozenset({'aortic valve'})]
+    for procedure_set in procedure_sets:
+        run(item_id=item_id,
+            procedure_set=procedure_set)
 
-    procedure_set = frozenset({'superior vena cava cannulation', 'femoral cannulation', 'mitral valve repair mini thorocotomy'})
-    run(item_id="38262",
-        procedure_set=procedure_set)
+    # procedure_set = frozenset({'superior vena cava cannulation', 'femoral cannulation', 'mitral valve repair mini thorocotomy'})
+    # run(item_id="38262",
+    #     procedure_set=procedure_set)
