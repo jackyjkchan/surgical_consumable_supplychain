@@ -38,11 +38,12 @@ if __name__ == "__main__":
     item_ids = [id for id in elective_info_rvs]
     data = pd.DataFrame()
 
-    for item_id in ["47320", "56931", "1686", "129636", "83532", "38262"]:
+    #for item_id in ["47320", "56931", "1686", "129636", "83532", "38262"]:
+    for item_id in ["83105", "83106"]:
     #for item_id in ["47320"]:
         for b in [1000, 10000]:
         #for b in [100]:
-            for lt in [1]:
+            for lt in [0, 1]:
             #for lt in [1]:
                 config = ns_model.ModelConfig(gamma=1,
                                               lead_time=lt,

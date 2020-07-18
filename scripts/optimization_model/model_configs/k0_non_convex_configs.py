@@ -19,20 +19,42 @@ rv_2_18 = pacal.DiscreteDistr([2, 18], [0.5, 0.5])
 rv_0_20 = pacal.DiscreteDistr([0, 20], [0.5, 0.5])
 rv_8_16 = pacal.DiscreteDistr([8, 16], [0.5, 0.5])
 
-rvs = [rv_4_16, rv_2_18, rv_0_20]
+
+rv_0_1 = pacal.DiscreteDistr([0, 1], [0.5, 0.5])
+rv_0_2 = pacal.DiscreteDistr([0, 2], [0.5, 0.5])
+rv_0_3 = pacal.DiscreteDistr([0, 3], [0.5, 0.5])
+
+
+def geometric_rv(p):
+    trunk = 1e-3
+    limit = 0
+    while (1-p)**(limit+1) > trunk:
+        limit += 1
+    limit += 1
+    values = list(range(limit))
+    probs = list(p*(1-p)**k for k in values)
+    scale = 1 / sum(probs)
+    probs = list(p * scale for p in probs)
+    return pacal.DiscreteDistr(values, probs)
+
+
+rv_geometric_80 = geometric_rv(0.8)
+rv_geometric_70 = geometric_rv(0.7)
+rv_geometric_65 = geometric_rv(0.6)
+
+rvs = [rv_geometric_80, rv_geometric_70]
 configs = []
 i = 0
 
-usage_models = [PoissonUsageModel(scale=1),
-                BinomUsageModel(n=4, p=0.25)]
+usage_models = [PoissonUsageModel(scale=1)]
 
 for rv in rvs:
-    for horizon in [0, 1, 2, 3, 4, 5, 6]:
+    for horizon in [0, 1, 2, 3]:
         for u in usage_models:
-            for b in [5, 1]:
-                for h in [10, 15, 20]:
+            for b in [0.25, 0.5, 0.75, 1]:
+                for h in [1]:
                     configs.append(ModelConfig(
-                        gamma=0.99,
+                        gamma=1,
                         lead_time=0,
                         info_state_rvs=None,
                         holding_cost=h,
@@ -43,7 +65,7 @@ for rv in rvs:
                         increments=1,
                         horizon=horizon,
                         info_rv=rv,
-                        label="k0_non_convex_searches",
+                        label="k0_non_convex_searches_geometric_bookings",
                         label_index=i)
                     )
                     i += 1
