@@ -20,7 +20,8 @@ if __name__ == "__main__":
         return 1.96 * np.std(series) / np.sqrt(len(series))
 
 
-    data = pd.read_pickle("publish/case_study/2020-04-20_parametric_case_study_full_inventory_500.pickle")
+    #data = pd.read_pickle("publish/case_study/2020-04-20_parametric_case_study_full_inventory_500.pickle")
+    data = pd.read_pickle("publish/case_study/2020-07-09_parametric_case_study_1686.pickle")
 
     days = range(14, 14 + 12 * 7)
     # filtered_data = data[data["info_horizon"] == n]

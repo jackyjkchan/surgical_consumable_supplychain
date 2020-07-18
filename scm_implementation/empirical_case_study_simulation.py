@@ -80,7 +80,7 @@ if __name__ == "__main__":
     pool = Pool(10)
     results = pd.DataFrame()
     item_ids = ["47320", "56931", "1686", "129636", "83532", "38262"]
-    item_ids = ["47320"]
+    item_ids = ["1686"]
     bs = [10000]
     lts = [1]
     ns = [0, 1, 2]
@@ -103,7 +103,7 @@ if __name__ == "__main__":
     for r in rs:
         results = results.append(r, ignore_index=True)
 
-    results.to_pickle(str(date.today()) + "_parametric_case_studyfull_inventory_500.pickle")
+    results.to_pickle(str(date.today()) + "_parametric_case_study_full_inventory_500.pickle")
 
     # summary = results.groupby(["backlogging_cost", "info_horizon", "lead_time", "item_id"]) \
     #     .agg({"surgeries_backlogged": ["mean", "std", halfwidth],

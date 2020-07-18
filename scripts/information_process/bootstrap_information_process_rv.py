@@ -297,6 +297,8 @@ if __name__ == "__main__":
     weekday_elective_traces = []
     selected_items = ["38242", "47320", "56931", "1686", "129636", "83532", "38262", "83105", "83106"]
     selected_items = ["83105", "83106"]
+    selected_items = ["38197", "21920", "82099"]
+
     for item_id in selected_items: #HIGH_USAGE_ITEMS + MED_USAGE_ITEMS + LOW_USAGE_ITEMS:
         print(item_id)
         emergency_trace, weekday_elective_trace = boostrap_info_process(item_id=item_id)
