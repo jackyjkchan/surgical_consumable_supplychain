@@ -23,7 +23,7 @@ normalize = True
 "scm_implementation/results/2020-01-22_ns_impl_56931.pickle"
 
 data = pd.read_pickle(
-    "publish/2020-07-07_base_experiment.pickle"
+    "2020-07-14_k0_non_convex_searches.pickle"
 )
 
 graph_data_export = {"traces": {}}
@@ -67,8 +67,11 @@ for comb in combinations:
     d = summary
     for field, val in zip(diff_fields, comb):
         d = d[d[field] == val]
+    if not len(d):
+        continue
     label = "_".join(["{}={}".format(field, str(val)) for field, val in zip(diff_fields, comb)])
     x = d["information_horizon"]
+
     y = 1 - d['j_value_function'] / max(d['j_value_function']) if normalize else d['j_value_function']
     traces.append(go.Scatter(
         x=x,

@@ -6,6 +6,7 @@ import datetime
 import plotly.graph_objs as go
 from plotly.offline import plot
 import numpy as np
+import matplotlib.pyplot as plt
 
 from scripts.usage_regression.usage_regression import CASE_STUDY_ITEMS, HIGH_USAGE_ITEMS, MED_USAGE_ITEMS, \
     LOW_USAGE_ITEMS
@@ -40,6 +41,13 @@ def run(case_service="Cardiac Surgery",
     usage_dist["mean"] = usage_dist["used_qty"].apply(lambda x: np.mean(x))
     usage_dist["variance"] = usage_dist["used_qty"].apply(lambda x: np.var(x, ddof=1))
     usage_dist["var/mean"] = usage_dist["variance"] / usage_dist["mean"]
+
+    df = surgery_df[surgery_df["procedures"].isin(usage_dist["procedures"])][["start_date", "used_qty"]]
+    rolling_df = df[["used_qty"]].rolling(100).mean()
+    plt.plot(list(rolling_df["used_qty"]))
+    rolling_df = df[["used_qty"]].rolling(50).mean()
+    plt.plot(list(rolling_df["used_qty"]))
+    plt.savefig("{}_rolling_usage.png".format(item_id), format="png")
 
     traces = []
     x_max = 0
@@ -78,10 +86,10 @@ def run(case_service="Cardiac Surgery",
     figure.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgrey')
     plot(figure, filename="{}_empircal_usage_distribution.html".format(item_id))
     usage_dist.to_csv("{}_empircal_usage_distribution.csv".format(item_id))
-
+    print(usage_dist["var/mean"].mean())
 
 if __name__ == "__main__":
-    item_id = "83105"
+    item_id = "82099"
     run(item_id=item_id)
     # for item_id in CASE_STUDY_ITEMS:
     #    run(item_id=item_id)

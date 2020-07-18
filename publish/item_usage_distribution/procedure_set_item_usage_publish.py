@@ -80,9 +80,12 @@ def run(case_service="Cardiac Surgery",
 
     import matplotlib
     matplotlib.rcParams.update({'font.size': 12})
-    plt.figure(figsize=(5.5, 5))
+    plt.figure(figsize=(5, 4.5))
+    ax = plt.axes()
+
     n, bins, patches = plt.hist(data, range(x_max+1), density=True, facecolor='#08306b', rwidth=0.95)
-    #plt.yticks([0, 0.2, 0.4, 0.6, 0.8, 1.0])
+
+    plt.yticks(np.arange(0, max(n)+0.1, 0.1))
     #matplotlib.pyplot.grid(b=True, which='major', axis='y')
     plt.ylabel("Probability")
     plt.xlabel("Used Quantity")
@@ -95,14 +98,16 @@ def run(case_service="Cardiac Surgery",
 if __name__ == "__main__":
     item_id = "47320"
     procedure_sets = [frozenset({'cabg triple'}),
-                      frozenset({'ita', 'esvh', 'cabg triple'})]
+                      frozenset({'ita', 'esvh', 'cabg triple'}),
+                      frozenset({'ita', 'esvh', 'cabg double'})]
     for procedure_set in procedure_sets:
         run(item_id=item_id,
             procedure_set=procedure_set)
 
     item_id = "1686"
     procedure_sets = [frozenset({'cabg triple', 'esvh', 'radial artery harvesting endoscopic', 'ita'}),
-                      frozenset({'aortic valve'})]
+                      frozenset({'aortic valve'}),
+                      frozenset({'cabg quadruple', 'esvh', 'ita'})]
     for procedure_set in procedure_sets:
         run(item_id=item_id,
             procedure_set=procedure_set)

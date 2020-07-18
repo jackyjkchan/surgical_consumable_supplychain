@@ -106,6 +106,7 @@ if __name__ == "__main__":
 
     results.to_pickle(str(date.today()) + "_parametric_case_study_1686.pickle")
 
+
     # summary = results.groupby(["backlogging_cost", "info_horizon", "lead_time", "item_id"]) \
     #     .agg({"surgeries_backlogged": ["mean", "std", halfwidth],
     #           "average_inventory_level": ["mean", "std", halfwidth],
