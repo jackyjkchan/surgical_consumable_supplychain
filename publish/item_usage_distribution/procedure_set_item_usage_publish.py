@@ -79,13 +79,17 @@ def run(case_service="Cardiac Surgery",
     # figure.write_image(fn, width=900, height=600)
 
     import matplotlib
+    import matplotlib.ticker as plticker
+
     matplotlib.rcParams.update({'font.size': 12})
-    plt.figure(figsize=(5, 4.5))
-    ax = plt.axes()
+    plt.figure(figsize=(4, 3.5))
+    plt.tight_layout()
+    plt.gcf().subplots_adjust(bottom=0.15, left=0.15)
 
     n, bins, patches = plt.hist(data, range(x_max+1), density=True, facecolor='#08306b', rwidth=0.95)
 
-    plt.yticks(np.arange(0, max(n)+0.1, 0.1))
+    spacing = np.round((max(n) + 0.1)/4, decimals=1)
+    plt.yticks(np.arange(0, max(n)+0.1, spacing))
     #matplotlib.pyplot.grid(b=True, which='major', axis='y')
     plt.ylabel("Probability")
     plt.xlabel("Used Quantity")

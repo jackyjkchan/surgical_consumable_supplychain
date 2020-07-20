@@ -17,6 +17,8 @@ One trajectory, one realization
 
 
 item_ids = ["47320", "56931", "1686", "129636", "83532", "38262", "83105", "83106"]
+item_ids = ["83105", "83106"]
+item_ids = ["21920", "38197", "82099"]
 bs = [1000, 10000]
 
 
@@ -69,6 +71,7 @@ def run(item_id, b, n, lt):
 if __name__ == "__main__":
     results = pd.DataFrame()
     for item_id in item_ids:
+        #for lt in [0]:
         for lt in [0, 1]:
             for b in bs:
                 for n in [0, 1, 2]:
