@@ -42,16 +42,16 @@ rv_geometric_80 = geometric_rv(0.8)
 rv_geometric_70 = geometric_rv(0.7)
 rv_geometric_65 = geometric_rv(0.6)
 
-rvs = [rv_geometric_80, rv_geometric_70]
+rvs = [rv_geometric_70]
 configs = []
 i = 0
 
 usage_models = [PoissonUsageModel(scale=1)]
 
 for rv in rvs:
-    for horizon in [0, 1, 2, 3]:
+    for horizon in [0, 1, 2, 3, 4]:
         for u in usage_models:
-            for b in [0.25, 0.5, 0.75, 1]:
+            for b in [0.001, 1, 10, 100, 1000, 10000]:
                 for h in [1]:
                     configs.append(ModelConfig(
                         gamma=1,
@@ -65,7 +65,7 @@ for rv in rvs:
                         increments=1,
                         horizon=horizon,
                         info_rv=rv,
-                        label="k0_non_convex_searches_geometric_bookings",
+                        label="k0_geometric_bookings",
                         label_index=i)
                     )
                     i += 1

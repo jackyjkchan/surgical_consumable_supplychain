@@ -11,12 +11,15 @@ configs = []
 item_ids = [id for id in elective_info_rvs]
 
 if __name__ == "__main__":
-    for lt in [0, 1]:
-        for item in ["83105", "83106"]:
+    #for lt in [0, 1]:
+    ns_configs = []
+    for lt in [1]:
+        #for item in ["21920", "38197", "82099", "47320", "1686"]:
+        for item in ["1686"]:
             i = 0
-            ns_configs = []
+
             for horizon in [0, 1, 2]:
-                for b in [1000, 10000]:
+                for b in [100]:
                     ns_configs.append(ns_model.ModelConfig(
                         gamma=1,
                         lead_time=lt,
@@ -28,11 +31,11 @@ if __name__ == "__main__":
                         elective_info_state_rv=elective_info_rvs[item],
                         emergency_info_state_rv=emergency_info_rvs[item],
                         horizon=horizon,
-                        label="ns_impl_LT_{}_{}".format(str(lt), item),
+                        label="ns_impl_b_100_LT_{}_{}".format(str(lt), item),
                         label_index=i))
                     i += 1
 
-            xs = list(range(1))
-            ts = list(range(7*4))
-            ns_model.run_configs(ns_configs, ts, xs)
+        xs = list(range(1))
+        ts = list(range(7*4))
+        ns_model.run_configs(ns_configs, ts, xs)
     #ns_model.run_config((ns_configs[3], ts, xs))

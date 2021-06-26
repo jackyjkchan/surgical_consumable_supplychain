@@ -102,6 +102,7 @@ def run_config(args):
                                   config.params["unit_price"],
                                   increments=config.params["increments"],
                                   usage_model=config.params["usage_model"])
+
     print("Starting {}: {}".format(config.sub_label, datetime.now().isoformat()))
 
     for t in ts:

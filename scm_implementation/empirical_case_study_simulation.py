@@ -81,8 +81,8 @@ if __name__ == "__main__":
     results = pd.DataFrame()
     item_ids = ["47320", "56931", "1686", "129636", "83532", "38262"]
     item_ids = ["83105", "83106"]
-    item_ids = ["1686"]
-    bs = [1000, 10000]
+    item_ids = ["47320", "1686", "21920", "38197", "82099"]
+    bs = [100]#1000, 10000]
     lts = [0, 1]
     ns = [0, 1, 2]
 
@@ -104,7 +104,7 @@ if __name__ == "__main__":
     for r in rs:
         results = results.append(r, ignore_index=True)
 
-    results.to_pickle(str(date.today()) + "_parametric_case_study_1686.pickle")
+    results.to_pickle(str(date.today()) + "_parametric_case_study_b_100.pickle")
 
 
     # summary = results.groupby(["backlogging_cost", "info_horizon", "lead_time", "item_id"]) \

@@ -5,6 +5,7 @@ from scipy.optimize import minimize, bisect, minimize_scalar
 import pandas as pd
 import pickle
 
+
 class Hospital:
     def __init__(self, db_model, periods=20):
         self.db_model = db_model
@@ -19,6 +20,8 @@ class Hospital:
         self.inventory_level = [0] * (periods + 1)
         # self.inventory_position = [0] * (periods + 1)
         self.cost_incurred = 0
+        self.backlog_cost_incurred = 0
+        self.holding_cost_incurred = 0
 
         self.clock = 1
 
@@ -42,31 +45,34 @@ class Hospital:
             self.inventory_level[self.clock] = x
 
             self.cost_incurred += self.db_model.h * max([0, x]) - self.db_model.b * min([0, x])
+            self.backlog_cost_incurred -= self.db_model.b * min([0, x])
+            self.holding_cost_incurred += self.db_model.h * max([0, x])
             self.clock += 1
 
             o = tuple(self.schedule[self.clock: min([self.clock + self.n_info, i_max])])
 
 
 if __name__ == "__main__":
-    results = pd.DataFrame()
-    infos = [0, 1, 2, 3]
+    backlogging_cost = 1000
+    infos = [1]
+
     gamma = 1
     lead_time = 0
     info = 0
 
-    info_state_rvs = [pacal.ConstDistr(0),
-                      pacal.ConstDistr(0),
-                      pacal.BinomialDistr(10, 0.5)]
-
+    results = pd.DataFrame()
     holding_cost = 1
-    backlogging_cost = 10
+
     setup_cost = 0
     unit_price = 0
     usage_model = PoissonUsageModel(scale=1)
 
+    s = 3000
+
     for info in infos:
-        results_fn = "db_results_{}.csv".format(str(info))
-        info_state_rvs = [pacal.ConstDistr(0)]*info + [pacal.BinomialDistr(10, 0.5)]
+        results_fn = "db_results_b_{}_{}_r_{}.csv".format(str(backlogging_cost), str(info), str(s))
+        info_state_rvs = [pacal.ConstDistr(0)] * info + \
+                         [pacal.BinomialDistr(10, 0.5)]
         model = DualBalancing(gamma,
                               lead_time,
                               info_state_rvs,
@@ -76,18 +82,23 @@ if __name__ == "__main__":
                               unit_price,
                               usage_model=usage_model)
 
-        for i in range(1000):
+        for i in range(s, s+1000):
             print("info: ", info, "rep: ", i)
-            hospital = Hospital(db_model=model, periods=5)
+            hospital = Hospital(db_model=model, periods=20)
             hospital.run()
-            fn = "hospital_info{}_rep{},pickle".format(str(info), str(i))
-            pickle.dump(hospital, open(fn, 'wb'))
+            fn = "hospital_info{}_rep{}_b{}_r_{}.pickle".format(str(info), str(i), str(backlogging_cost), str(i))
+            # pickle.dump(hospital, open(fn, 'wb'))
             results = results.append({
                 "pickle": fn,
                 "info": info,
                 "rep": i,
-                "cost": hospital.cost_incurred
+                "cost": hospital.cost_incurred,
+                "backlog_cost_incurred": hospital.backlog_cost_incurred,
+                "holding_cost_incurred": hospital.holding_cost_incurred,
+                "schedule": hospital.schedule,
+                "order_cont": hospital.order_continuous,
+                "order": hospital.order,
+                "demand": hospital.demand,
+                "inventory": hospital.inventory_level
             }, ignore_index=True)
             results.to_csv(results_fn)
-
-

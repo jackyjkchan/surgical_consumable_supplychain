@@ -38,7 +38,7 @@ class UsageModel:
 
 
 class PoissonUsageModel(UsageModel):
-    def __init__(self, scale=1, trunk=1e-3):
+    def __init__(self, scale=1, trunk=1e-5):
         self.name = "Poisson {} {}".format(str(scale), str(trunk))
         self.scale = scale
         self.trunk = trunk
@@ -47,6 +47,7 @@ class PoissonUsageModel(UsageModel):
         return pacal.PoissonDistr(o * self.scale, trunk_eps=self.trunk)
 
     def random(self, o=1):
+        #return self.usage(o).rand(1)[0]
         return numpy.random.poisson(o * self.scale)
 
 

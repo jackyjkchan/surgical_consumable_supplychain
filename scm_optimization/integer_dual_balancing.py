@@ -135,7 +135,7 @@ class DualBalancing:
             head += f[0]
             a.pop(0)
             f.pop(0)
-        while tail < trunk / 2 and f[-1] < trunk / 2:
+        while tail < trunk and f[-1] < trunk:
             tail += f[-1]
             a.pop(-1)
             f.pop(-1)
