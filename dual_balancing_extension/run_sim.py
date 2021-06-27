@@ -6,9 +6,10 @@ from dual_balancing_extension.simulation import Hospital
 import pandas as pd
 import pickle
 import sys
-
+time.time()
 
 if __name__ == "__main__":
+    start_time = time.time()
     print(sys.argv)
     rep = sys.argv[1] if len(sys.argv) > 1 else 0
 
@@ -59,7 +60,8 @@ if __name__ == "__main__":
         "order_cont": hospital.order_continuous,
         "order": hospital.order,
         "demand": hospital.demand,
-        "inventory": hospital.inventory_level
+        "inventory": hospital.inventory_level,
+        "run_time_min": (time.time() - start_time)/60
     }, ignore_index=True)
     results.to_csv(results_fn)
 
