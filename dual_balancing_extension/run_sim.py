@@ -17,7 +17,6 @@ if __name__ == "__main__":
     info = 1
 
     lead_time = 0
-    info = 0
 
     results = pd.DataFrame()
 

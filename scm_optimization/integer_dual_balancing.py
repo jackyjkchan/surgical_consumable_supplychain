@@ -144,6 +144,7 @@ class DualBalancing:
         return rv
 
     def window_demand(self, t, j, o):
+        print("in window_demand", t, j, o)
         """
         :param t: current period, dummy variable for stationary case
         :param j: end period (inclusive) 0 is the last period.
@@ -170,6 +171,7 @@ class DualBalancing:
         return self.demand_rv_cache[(periods, cumul_o)]
 
     def h_db(self, q, t, x, o):
+        print(" in h_db", q, t, x, o)
         """"Expected holding cost incurred by order size of q by those units from t to end of horizon
             state space is t for current priod
             o for info state
