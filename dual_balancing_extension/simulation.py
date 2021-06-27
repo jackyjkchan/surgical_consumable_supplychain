@@ -38,7 +38,7 @@ class Hospital:
             q = self.db_model.order_q_continuous(t, x, o)
 
             self.order_continuous[self.clock] = q
-            order_q = int(q) if random() < q - int(q) else int(q) + 1
+            order_q = int(q) if random() > q - int(q) else int(q) + 1
             self.order[self.clock] = order_q
 
             x += order_q - self.demand[self.clock]

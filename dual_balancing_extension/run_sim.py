@@ -28,7 +28,7 @@ if __name__ == "__main__":
     usage_model = PoissonUsageModel(scale=1)
 
 
-    results_fn = "db_results_b_{}_{}_r_{}.csv".format(str(backlogging_cost),
+    results_fn = "db_results/db_results_b_{}_{}_r_{}.csv".format(str(backlogging_cost),
                                                       str(info),
                                                       str(rep)
                                                       )
@@ -51,6 +51,7 @@ if __name__ == "__main__":
 
     results = results.append({
         "info": info,
+        "backlogging_cost": backlogging_cost,
         "rep": rep,
         "cost": hospital.cost_incurred,
         "backlog_cost_incurred": hospital.backlog_cost_incurred,
