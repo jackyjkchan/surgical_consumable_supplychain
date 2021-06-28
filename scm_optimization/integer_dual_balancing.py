@@ -127,20 +127,20 @@ class DualBalancing:
         self.q_cache = {}
 
     def trunk_rv(self, rv, trunk=1e-3):
-        a = [dirac.a for dirac in rv.get_piecewise_pdf().getDiracs()]
-        f = [dirac.f for dirac in rv.get_piecewise_pdf().getDiracs()]
-        head = 0
-        tail = 0
-        while head < trunk / 2 and f[0] < trunk / 2:
-            head += f[0]
-            a.pop(0)
-            f.pop(0)
-        while tail < trunk and f[-1] < trunk:
-            tail += f[-1]
-            a.pop(-1)
-            f.pop(-1)
-        rv = pacal.DiscreteDistr([aa for aa in a],
-                                 [ff/(1-head-tail) for ff in f])
+        # a = [dirac.a for dirac in rv.get_piecewise_pdf().getDiracs()]
+        # f = [dirac.f for dirac in rv.get_piecewise_pdf().getDiracs()]
+        # head = 0
+        # tail = 0
+        # while head < trunk / 2 and f[0] < trunk / 2:
+        #     head += f[0]
+        #     a.pop(0)
+        #     f.pop(0)
+        # while tail < trunk and f[-1] < trunk:
+        #     tail += f[-1]
+        #     a.pop(-1)
+        #     f.pop(-1)
+        # rv = pacal.DiscreteDistr([aa for aa in a],
+        #                          [ff/(1-head-tail) for ff in f])
         return rv
 
     def window_demand(self, t, j, o):
