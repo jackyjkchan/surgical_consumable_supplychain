@@ -4,4 +4,4 @@
 #SBATCH --array=1-3000
 source venv/bin/activate
 export PYTHONPATH="${PYTHONPATH}:/home/jachan/projects/def-sarhangi/jachan/surgical_consumable_supplychain"
-./venv/bin/python dual_balancing_extension/run_sim_args.py $SLURM_ARRAY_TASK_ID 1000 0
+./venv/bin/python dual_balancing_extension/run_sim_args.py $SLURM_ARRAY_TASK_ID 1000 2
