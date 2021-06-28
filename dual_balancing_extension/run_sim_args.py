@@ -12,10 +12,10 @@ if __name__ == "__main__":
     start_time = time.time()
     print(sys.argv)
     
-    rep = sys.argv[1] if len(sys.argv) > 1 else 0
+    rep = int(sys.argv[1]) if len(sys.argv) > 1 else 0
 
-    backlogging_cost = sys.argv[2] if len(sys.argv) > 1 else 1000
-    info = sys.argv[3] if len(sys.argv) > 1 else 0
+    backlogging_cost = int(sys.argv[2]) if len(sys.argv) > 1 else 1000
+    info = int(sys.argv[3]) if len(sys.argv) > 1 else 0
 
     lead_time = 0
 
