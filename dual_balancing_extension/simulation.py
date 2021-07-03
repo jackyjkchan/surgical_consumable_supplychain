@@ -52,6 +52,48 @@ class Hospital:
             o = tuple(self.schedule[self.clock: min([self.clock + self.n_info, i_max])])
 
 
+class Hospital_LA:
+    def __init__(self, model, periods=20):
+        self.model = model
+        self.n_info = len(model.info_state_rvs) - 1
+        self.periods = periods
+
+        self.schedule = [0] + list(sum(self.model.info_state_rvs).rand(n=periods))
+        self.demand = [model.usage_model.random(x) for x in self.schedule]
+
+        self.order = [0] * (periods + 1)
+        self.order_continuous = [0] * (periods + 1)
+        self.inventory_level = [0] * (periods + 1)
+        # self.inventory_position = [0] * (periods + 1)
+        self.cost_incurred = 0
+        self.backlog_cost_incurred = 0
+        self.holding_cost_incurred = 0
+
+        self.clock = 1
+
+    def clock_to_time(self, clock):
+        time = self.periods - clock
+        return time
+
+    def run(self):
+        x = self.inventory_level[self.clock - 1]
+        o = tuple(self.schedule[self.clock: self.clock + self.n_info])
+        i_max = len(self.schedule)
+        while self.clock < len(self.schedule):
+            t = self.clock_to_time(self.clock)
+            order_q = self.model.order_la (t, x, o)
+            self.order[self.clock] = order_q
+
+            x += order_q - self.demand[self.clock]
+            self.inventory_level[self.clock] = x
+
+            self.cost_incurred += self.model.h * max([0, x]) - self.model.b * min([0, x])
+            self.backlog_cost_incurred -= self.model.b * min([0, x])
+            self.holding_cost_incurred += self.model.h * max([0, x])
+            self.clock += 1
+
+            o = tuple(self.schedule[self.clock: min([self.clock + self.n_info, i_max])])
+
 if __name__ == "__main__":
     backlogging_cost = 1000
     infos = [1]

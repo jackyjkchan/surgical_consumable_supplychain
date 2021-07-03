@@ -199,6 +199,21 @@ class DualBalancing:
         expected_cost = under_stock.mean() * self.b
         return expected_cost
 
+    def la_objective(self, q, t, x, o):
+        return self.h_db(q, t, x, o) + self.pi_db(q, t, x, o)
+
+    def order_la(self, t, x, o):
+        print(t, x, o)
+        prev, cost = float('inf'), float('inf')
+        for q in range(0, 50):
+            cost = self.la_objective(q, t, x, o)
+            if cost < prev:
+                prev = cost
+            else:
+                return q-1
+        print("MAXIMUM HIT: ERROR")
+        return q
+
     # @lru_cache()
     def g_objective(self, q, t, x, o):
         #print("in g_objective")
