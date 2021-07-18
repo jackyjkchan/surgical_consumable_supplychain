@@ -4,4 +4,11 @@ src_data
 *.pyo
 scripts/optimization_model/results
 scm_implementation/results/
-regression_inputs/
+regression_inputs
+publish/2020-06-30_base_experiment_NEW.pickle
+publish/2020-07-07_base_experiment.pickle
+publish/case_study/2020-07-09_parametric_case_study_1686.pickle
+publish/2020-07-28_emergency_ratio_Binomial.pickle
+publish/2020-07-28_emergency_ratio_Poisson.pickle
+publish/2020-07-28_k0_geometric_bookings.pickle
+publish/case_study/2020-07-24_parametric_case_study_round3.pickle
