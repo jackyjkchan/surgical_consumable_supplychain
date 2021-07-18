@@ -16,6 +16,7 @@ if __name__ == "__main__":
 
     backlogging_cost = int(sys.argv[2]) if len(sys.argv) > 1 else 1000
     info = int(sys.argv[3]) if len(sys.argv) > 1 else 0
+    binom_usage_n = int(sys.argv[4]) if len(sys.argv) == 5 else 0
 
     lead_time = 0
 
@@ -27,12 +28,19 @@ if __name__ == "__main__":
     gamma = 1
 
     usage_model = PoissonUsageModel(scale=1)
-
-
     results_fn = "la_results/la_results_b_{}_{}_r_{}.csv".format(str(backlogging_cost),
-                                                      str(info),
-                                                      str(rep)
-                                                      )
+                                                                 str(info),
+                                                                 str(rep)
+                                                                 )
+
+    if binom_usage_n:
+        usage_model = BinomUsageModel(n=binom_usage_n, p=1 / binom_usage_n)
+        results_fn = "la_binomial_usage_results/la_results_b_{}_n_{}_{}_r_{}.csv".format(str(backlogging_cost),
+                                                                                         str(binom_usage_n),
+                                                                                         str(info),
+                                                                                         str(rep)
+                                                                                         )
+
     info_state_rvs = [pacal.ConstDistr(0)] * info + \
                      [pacal.BinomialDistr(10, 0.5)]
 
@@ -50,7 +58,7 @@ if __name__ == "__main__":
     hospital = Hospital_LA(model=model, periods=20)
     hospital.run()
 
-    results = results.append({
+    result = {
         "info": info,
         "backlogging_cost": backlogging_cost,
         "rep": rep,
@@ -63,7 +71,11 @@ if __name__ == "__main__":
         "demand": hospital.demand,
         "inventory": hospital.inventory_level,
         "run_time_min": (time.time() - start_time)/60
-    }, ignore_index=True)
+    }
+    if binom_usage_n:
+        result["binomial_n"] = binom_usage_n
+        result["binomial_p"] = 1 / binom_usage_n,
+    results = results.append(result, ignore_index = True)
     print(results)
     results.to_csv(results_fn)
 
