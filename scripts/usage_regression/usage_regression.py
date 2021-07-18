@@ -189,7 +189,7 @@ def test_usage_r_regression_flow(item_id=None, save_results=False):
 if __name__ == "__main__":
     run_summary = pd.DataFrame()
     #for id in CASE_STUDY_ITEMS_SET2:
-    for id in ["82099"]:
+    for id in ["21920"]:
        print("ITEM ID:", id)
        row = test_usage_r_regression_flow(item_id=id, save_results=True)
        run_summary = run_summary.append(row, ignore_index=True)

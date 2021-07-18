@@ -56,12 +56,13 @@ class BinomUsageModel(UsageModel):
         self.name = "Binom {} {}".format(str(n), str(p))
         self.n = n
         self.p = p
+        self.trunk = 1e-5
 
     def usage(self, o):
         return pacal.BinomialDistr(int(o * self.n), p=self.p)
 
     def random(self, o=1):
-        return numpy.random.binomial(o * self.scale, self.p)
+        return numpy.random.binomial(o * self.n, self.p)
 
 
 class DeterministUsageModel(UsageModel):

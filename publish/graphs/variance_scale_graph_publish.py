@@ -29,7 +29,11 @@ line_template.data.scatter = [
 colours = [
     '#08306b', '#08519c', '#2171b5', '#4291c6', '#67000d', '#a50f15', '#cb181d', '#ef3b2c'
 ]
+colours = [
+    '#08306b', '#08519c', '#67000d', '#a50f15', '#cb181d', '#ef3b2c'
+]
 lines = ["-", "--", "-.", ":", "-", "--", "-.", ":"]
+lines = ["-", "--", "-", "--", "-.", ":"]
 
 line_template.layout = dict(font=dict(size=18))
 line_template.layout.title = dict(font=dict(size=10))
@@ -51,8 +55,8 @@ data_labels = {
     "usage_model=Const 4_info_rv_str=Binomial(8.0.5)": r'$Var_U=0, Var_B = 2$',
     "usage_model=Const 4_info_rv_str=Poisson(4.0)": r'$Var_U=0, Var_B = 4$',
 
-    "usage_model=Binom 8 0.5_info_rv_str=": r'$Var_U=2, Var_B = 0$',
-    "usage_model=Poisson 4 0.001_info_rv_str=": r'$Var_U=4, Var_B = 0$',
+    #"usage_model=Binom 8 0.5_info_rv_str=": r'$Var_U=2, Var_B = 0$',
+    #"usage_model=Poisson 4 0.001_info_rv_str=": r'$Var_U=4, Var_B = 0$',
 
     "usage_model=Binom 8 0.5_info_rv_str=Poisson(4.0)": r'$Var_U=2, Var_B = 4$',
     "usage_model=Poisson 4 0.001_info_rv_str=Poisson(4.0)": r'$Var_U=4, Var_B = 4$',
@@ -62,8 +66,7 @@ data_labels = {
 }
 
 traces = []
-fig = plt.figure(figsize=(7, 4))
-plt.tight_layout()
+fig = plt.figure(figsize=(6, 3.5))
 ax = plt.axes()
 ax.set(xlim=(-0.5, 3.5),
        xlabel='Information Horizon', ylabel='Value of ABI (%)',
@@ -97,8 +100,9 @@ figure.update_yaxes(showgrid=False, gridwidth=1, gridcolor='lightgrey')
 figure.write_image("variance_scale_experiment.svg", width=600, height=400)
 
 plt.legend()
+plt.tight_layout()
 box = ax.get_position()
-ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+ax.set_position([box.x0, box.y0, box.width * 0.65, box.height])
 ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 #plt.show()
 plt.savefig("variance_scale_experiment" + ".svg", format='svg')

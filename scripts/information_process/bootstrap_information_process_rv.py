@@ -15,11 +15,13 @@ from scripts.usage_regression.usage_regression import HIGH_USAGE_ITEMS, MED_USAG
 from scm_analytics import ScmAnalytics, Analytics
 from scm_analytics.config import lhs_config
 import datetime
+import matplotlib
+import matplotlib.pyplot as plt
 
 
 def boostrap_info_process(item_id="38242"):
     case_service = "Cardiac Surgery"
-    #item_id = "3824ns_info_state_rvs2"
+    # item_id = "3824ns_info_state_rvs2"
     info_granularity = 1
     eps_trunk = 1e-3
 
@@ -289,6 +291,38 @@ def boostrap_info_process(item_id="38242"):
     with open(os.path.join(emergency_outdir, "{0}.pickle".format(item_id)), "wb") as f:
         pickle.dump(emergency_info_rv, f)
 
+    plt.figure(figsize=(3.15, 2.65))
+    plt.tight_layout()
+    plt.gcf().subplots_adjust(bottom=0.15, left=0.2)
+    n, bins, patches = plt.hist(emergency_samples,
+                                range(int(max(emergency_samples)) + 1), density=True, facecolor='#08306b', rwidth=0.95)
+    spacing = np.round((max(n) + 0.1)/4, decimals=1)
+    plt.yticks(np.arange(0, max(n)+0.05, spacing))
+    spacing = np.round((max(emergency_samples) + 1) / 4, decimals=0)
+    plt.xticks(np.arange(0, max(emergency_samples) + spacing, spacing))
+    plt.ylabel("Probability")
+    plt.xlabel("Value")
+    fn = "Emergency_Info_process_{}".format(item_id)
+    plt.savefig(fn+".svg", format='svg')
+    plt.savefig(fn+".eps", format='eps')
+    plt.close()
+
+    plt.figure(figsize=(3.15, 2.65))
+    plt.tight_layout()
+    plt.gcf().subplots_adjust(bottom=0.15, left=0.2)
+    n, bins, patches = plt.hist(elective_samples,
+                                range(int(max(elective_samples)) + 1), density=True, facecolor='#08306b', rwidth=0.95)
+    spacing = np.round((max(n) + 0.1) / 4, decimals=1)
+    plt.yticks(np.arange(0, max(n) + 0.05, spacing))
+    spacing = np.round((max(elective_samples) + 1) / 4, decimals=0)
+    plt.xticks(np.arange(0, max(elective_samples) + spacing, spacing))
+
+    plt.ylabel("Probability")
+    plt.xlabel("Value")
+    fn = "Elective_Info_process_{}".format(item_id)
+    plt.savefig(fn + ".svg", format='svg')
+    plt.savefig(fn + ".eps", format='eps')
+    plt.close()
     return emergency_trace, weekday_elective_trace
 
 
@@ -297,14 +331,13 @@ if __name__ == "__main__":
     weekday_elective_traces = []
     selected_items = ["38242", "47320", "56931", "1686", "129636", "83532", "38262", "83105", "83106"]
     selected_items = ["83105", "83106"]
-    selected_items = ["38197", "21920", "82099"]
+    selected_items = ["38197", "21920"]#, "82099"]
 
-    for item_id in selected_items: #HIGH_USAGE_ITEMS + MED_USAGE_ITEMS + LOW_USAGE_ITEMS:
+    for item_id in selected_items:  # HIGH_USAGE_ITEMS + MED_USAGE_ITEMS + LOW_USAGE_ITEMS:
         print(item_id)
         emergency_trace, weekday_elective_trace = boostrap_info_process(item_id=item_id)
         emergency_traces.append(emergency_trace)
         weekday_elective_traces.append(weekday_elective_trace)
-
 
     layout = go.Layout(title="Weekday Elective Info R.V - High Usage",
                        xaxis={'title': 'Info State (Poisson Usage)]'},

@@ -100,21 +100,35 @@ def run(case_service="Cardiac Surgery",
 
 
 if __name__ == "__main__":
-    item_id = "47320"
-    procedure_sets = [frozenset({'cabg triple'}),
-                      frozenset({'ita', 'esvh', 'cabg triple'}),
-                      frozenset({'ita', 'esvh', 'cabg double'})]
+    # item_id = "47320"
+    # procedure_sets = [frozenset({'cabg triple'}),
+    #                   frozenset({'ita', 'esvh', 'cabg triple'}),
+    #                   frozenset({'ita', 'esvh', 'cabg double'})]
+    # for procedure_set in procedure_sets:
+    #     run(item_id=item_id,
+    #         procedure_set=procedure_set)
+    #
+    # item_id = "1686"
+    # procedure_sets = [frozenset({'cabg triple', 'esvh', 'radial artery harvesting endoscopic', 'ita'}),
+    #                   frozenset({'aortic valve'}),
+    #                   frozenset({'cabg quadruple', 'esvh', 'ita'})]
+    # for procedure_set in procedure_sets:
+    #     run(item_id=item_id,
+    #         procedure_set=procedure_set)
+
+    item_id = "21920"
+    procedure_sets = [frozenset({'cabg double', 'esvh', 'ita'}),
+                      frozenset({'radial artery harvesting endoscopic', 'esvh', 'cabg triple', 'ita'}),
+                      frozenset({'cabg mini thoracotomy robotic', 'ita'})]
     for procedure_set in procedure_sets:
         run(item_id=item_id,
             procedure_set=procedure_set)
 
-    item_id = "1686"
-    procedure_sets = [frozenset({'cabg triple', 'esvh', 'radial artery harvesting endoscopic', 'ita'}),
-                      frozenset({'aortic valve'}),
-                      frozenset({'cabg quadruple', 'esvh', 'ita'})]
+    item_id = "38197"
     for procedure_set in procedure_sets:
         run(item_id=item_id,
             procedure_set=procedure_set)
+
 
     # procedure_set = frozenset({'superior vena cava cannulation', 'femoral cannulation', 'mitral valve repair mini thorocotomy'})
     # run(item_id="38262",

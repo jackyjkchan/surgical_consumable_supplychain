@@ -2,6 +2,7 @@ import pandas as pd
 
 item_ids = ["47320", "56931", "1686", "129636", "83532", "38262"]
 catheters = ["83105", "83106"]
+round3_items = ["21920", "38197", "82099"]
 
 data0s = [pd.read_pickle(
     "scm_implementation/results/2020-01-22_ns_impl_{}.pickle".format(item_id)
@@ -9,19 +10,27 @@ data0s = [pd.read_pickle(
 data1s = [pd.read_pickle(
     "scm_implementation/results/2020-04-08_ns_impl_LT_1_{}.pickle".format(item_id)
 ) for item_id in item_ids]
-data_catheter0 = [pd.read_pickle(
-    "scm_implementation/results/2020-04-23_ns_impl_LT_0_{}.pickle".format(item_id)
-) for item_id in catheters]
-data_catheter1 = [pd.read_pickle(
-    "scm_implementation/results/2020-04-23_ns_impl_LT_1_{}.pickle".format(item_id)
-) for item_id in catheters]
-datas = data1s + data0s + data_catheter0 + data_catheter1
+data_round3_0 = [pd.read_pickle(
+    "scm_implementation/results/2020-07-18_ns_impl_LT_0_{}.pickle".format(item_id)
+) for item_id in round3_items]
+data_round3_1 = [pd.read_pickle(
+    "scm_implementation/results/2020-07-18_ns_impl_LT_1_{}.pickle".format(item_id)
+) for item_id in round3_items]
+data_b100_r3 = [pd.read_pickle(
+    "scm_implementation/results/2020-07-28_ns_impl_b_100_LT_0_{}.pickle".format(item_id)
+) for item_id in round3_items]
+data_b100_lt1 = [pd.read_pickle(
+    "scm_implementation/results/2020-07-28_ns_impl_b_100_LT_1_{}.pickle".format(item_id)
+) for item_id in round3_items + ["47320", "1686"]]
+datas = data1s + data0s + data_round3_0 + data_round3_1 + data_b100_r3 + data_b100_lt1
 data = pd.concat(datas)
 
 full_value_data0 = pd.read_csv("scm_implementation/results/2020-01-01_full_info_implementation_results.csv")
 full_value_data1 = pd.read_csv("scm_implementation/results/2020-03-24_full_info_implementation_results_LT1.csv")
-full_value_data_catheters = pd.read_csv("scm_implementation/results/2020-04-23_full_value_info_cost_4wks_catheters.csv")
-datas = [full_value_data0] + [full_value_data_catheters] + [full_value_data1]
+full_value_data_round3 = pd.read_csv("scm_implementation/results/2020-07-23_full_value_info_cost_4wks_round3.csv")
+full_value_b100 = pd.read_csv("scm_implementation/results/full_value_info_cost_4wks_b_100_lt_1.csv")
+datas = [full_value_data0] + [full_value_data_round3] + [full_value_data1] + [full_value_b100]
+
 full_value_data0 = pd.concat(datas)
 full_value_data0 = full_value_data0.rename(columns={"mean": "j_value_function_FULL"})
 full_value_data0["item_id"] = full_value_data0["item_id"].apply(lambda x: str(x))
@@ -39,7 +48,6 @@ data["item_id"] = data["label"].apply(lambda x: x.split("_")[-1])
 #                                                            )
 
 data = data[(data["inventory_position_state"] == 0)]
-data = data[data["backlogging_cost"] > 100]
 data["j_value_function"] = data["j_value_function"] * data["information_state_p"]
 summary = data.groupby(groupbys).agg({"j_value_function": "sum"}).reset_index()
 summary = summary[["backlogging_cost", "lead_time", "item_id", "information_horizon", "j_value_function"]]

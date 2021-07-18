@@ -89,7 +89,7 @@ def run(case_service="Cardiac Surgery",
     print(usage_dist["var/mean"].mean())
 
 if __name__ == "__main__":
-    item_id = "82099"
+    item_id = "1686"
     run(item_id=item_id)
     # for item_id in CASE_STUDY_ITEMS:
     #    run(item_id=item_id)

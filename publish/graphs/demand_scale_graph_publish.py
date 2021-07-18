@@ -34,8 +34,7 @@ data_labels = {
     "backlogging_cost=1000_info_rv_str=Binomial(20.0.5)": r'$c_b=10^3, M=20$',
 }
 traces = []
-fig = plt.figure(figsize=(7, 4))
-plt.tight_layout()
+fig = plt.figure(figsize=(6, 3.5))
 ax = plt.axes()
 ax.set(xlim=(-0.5, 3.5),
        xlabel='Information Horizon', ylabel='Value of ABI (%)',
@@ -69,8 +68,9 @@ figure.update_yaxes(showgrid=False, gridwidth=1, gridcolor='lightgrey')
 figure.write_image("demand_scale_experiment.svg", width=600, height=400)
 
 plt.legend()
+plt.tight_layout()
 box = ax.get_position()
-ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+ax.set_position([box.x0, box.y0, box.width * 0.65, box.height])
 ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 #plt.show()
 plt.savefig("demand_scale_experiment" + ".svg", format='svg')

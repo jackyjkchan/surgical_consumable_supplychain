@@ -18,7 +18,7 @@ colours = [
 ]
 line_template.layout = dict(font=dict(size=18))
 line_template.layout.title = dict(font=dict(size=10))
-graph_data = pickle.load(open("publish/graphs/2020-07-07_base_experiment_graph_dat.pickle", "rb"))
+graph_data = pickle.load(open("publish/graphs/2020-07-28_geometric_bookings_graph_dat.pickle", "rb"))
 graph_data["traces"]["backlogging_cost=1.0"] = ([0, 1, 2, 3, 4],
                                                 [0.0, 0.19589121078347493, 0.1963192048540322, 0.19632587500807264,
                                                  0.19632587500807264])
@@ -45,7 +45,6 @@ traces = []
 
 
 fig = plt.figure(figsize=(6, 3.5))
-#plt.tight_layout()
 ax = plt.axes()
 ax.set(xlim=(-0.5, 4.5),
        xlabel='Information Horizon', ylabel='Value of ABI (%)',
@@ -60,7 +59,7 @@ for label in data_labels:
     plt.plot(x, y, marker='.', color=colours[c], label=data_labels[label])
     c += 1
 
-layout = go.Layout(title=None,
+layout = go.Layout(title="",
                    xaxis=dict(title='Information Horizon', dtick=1,
                               mirror=True, ticks='outside', showline=True,
                               zeroline=False, showgrid=False),
@@ -77,16 +76,13 @@ figure = go.Figure(
 figure.update_layout(template=line_template)
 figure.update_xaxes(showgrid=False, gridwidth=0.5, gridcolor='lightgrey')
 figure.update_yaxes(showgrid=False, gridwidth=1, gridcolor='lightblue')
-figure.write_image("basic_experiment.svg", width=900, height=600)
+figure.write_image("basic_geometric_experiment.svg", width=900, height=600)
 
 plt.legend()
 plt.tight_layout()
 box = ax.get_position()
-import matplotlib.ticker as plticker
-loc = plticker.MultipleLocator(base=10) # this locator puts ticks at regular intervals
-ax.yaxis.set_major_locator(loc)
 ax.set_position([box.x0, box.y0, box.width * 0.65, box.height])
 ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 #plt.show()
-plt.savefig("basic_experiment" + ".svg", format='svg')
-plt.savefig("basic_experiment" + ".eps", format='eps')
+plt.savefig("basic_geometric_experiment" + ".svg", format='svg')
+plt.savefig("basic_geometric_experiment" + ".eps", format='eps')
