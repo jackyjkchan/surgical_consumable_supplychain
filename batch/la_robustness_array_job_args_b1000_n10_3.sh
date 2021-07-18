@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --time=01:30:00
+#SBATCH --time=09:30:00
 #SBATCH --mem-per-cpu=1G
 #SBATCH --array=1-3000
 source venv/bin/activate
