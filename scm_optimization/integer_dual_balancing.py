@@ -163,7 +163,8 @@ class DualBalancing:
             rv = self.trunk_rv(rv)
             self.unknown_demand_cache.append(rv)
         index = periods - 1
-        rv = self.usage_model.usage(cumul_o) + self.unknown_demand_cache[index]
+        rv = self.trunk_rv(self.usage_model.usage(cumul_o)) + self.unknown_demand_cache[index]
+        rv = self.trunk_rv(rv)
         rv = pacal.DiscreteDistr([dirac.a for dirac in rv.get_piecewise_pdf().getDiracs()],
                                  [dirac.f for dirac in rv.get_piecewise_pdf().getDiracs()])
 
