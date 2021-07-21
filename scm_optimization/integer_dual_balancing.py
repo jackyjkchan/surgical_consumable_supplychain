@@ -121,6 +121,7 @@ class DualBalancing:
             demand_rv = pacal.DiscreteDistr([dirac.a for dirac in demand_pdf.getDiracs()],
                                             [dirac.f for dirac in demand_pdf.getDiracs()])
             demand_rv += prev
+            demand_rv = self.trunk_rv(demand_rv)
             self.unknown_demand_cache.append(demand_rv)
             prev = demand_rv
         self.demand_rv_cache = {}  # (periods, o) -> RV
