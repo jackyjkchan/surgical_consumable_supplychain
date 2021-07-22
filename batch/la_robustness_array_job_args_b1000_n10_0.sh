@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH --time=03:30:00
-#SBATCH --mem-per-cpu=1G
+#SBATCH --time=05:30:00
+#SBATCH --mem-per-cpu=2G
 #SBATCH --array=1-3000
 source venv/bin/activate
 export PYTHONPATH="${PYTHONPATH}:/home/jachan/projects/def-sarhangi/jachan/surgical_consumable_supplychain"

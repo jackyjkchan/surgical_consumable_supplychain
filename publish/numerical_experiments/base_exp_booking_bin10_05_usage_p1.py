@@ -6,7 +6,7 @@ configs = []
 i = 0
 
 
-for horizon in [0, 1, 2, 3, 4, 5]:
+for horizon in [0, 1, 2, 3, 4]:
     for b in [10, 100, 1000, 10000]:
         configs.append(ModelConfig(
             gamma=1,
@@ -19,7 +19,8 @@ for horizon in [0, 1, 2, 3, 4, 5]:
             usage_model=PoissonUsageModel(1),
             horizon=horizon,
             info_rv=pacal.BinomialDistr(10, 0.5),
-            label="base_experiment",
+            label="base_experiment_detailed",
+            detailed=True,
             label_index=i)
         )
         i += 1
