@@ -121,13 +121,13 @@ class DualBalancing:
             demand_rv = pacal.DiscreteDistr([dirac.a for dirac in demand_pdf.getDiracs()],
                                             [dirac.f for dirac in demand_pdf.getDiracs()])
             demand_rv += prev
-            demand_rv = self.trunk_rv(demand_rv)
+            #demand_rv = self.trunk_rv(demand_rv)
             self.unknown_demand_cache.append(demand_rv)
             prev = demand_rv
         self.demand_rv_cache = {}  # (periods, o) -> RV
         self.q_cache = {}
 
-    def trunk_rv(self, rv, trunk=1e-4):
+    def trunk_rv(self, rv, trunk=1e-5):
         a = [dirac.a for dirac in rv.get_piecewise_pdf().getDiracs()]
         f = [dirac.f for dirac in rv.get_piecewise_pdf().getDiracs()]
         head = 0
@@ -161,13 +161,13 @@ class DualBalancing:
             rv = self.unknown_demand_cache[-1] + self.no_info_demand
             rv = pacal.DiscreteDistr([dirac.a for dirac in rv.get_piecewise_pdf().getDiracs()],
                                      [dirac.f for dirac in rv.get_piecewise_pdf().getDiracs()])
-            rv = self.trunk_rv(rv)
+            #rv = self.trunk_rv(rv)
             self.unknown_demand_cache.append(rv)
         index = periods - 1
-        rv = self.trunk_rv(self.usage_model.usage(cumul_o)) + self.unknown_demand_cache[index]
+        rv = self.usage_model.usage(cumul_o) + self.unknown_demand_cache[index]
         rv = self.trunk_rv(rv)
-        rv = pacal.DiscreteDistr([dirac.a for dirac in rv.get_piecewise_pdf().getDiracs()],
-                                 [dirac.f for dirac in rv.get_piecewise_pdf().getDiracs()])
+        #rv = pacal.DiscreteDistr([dirac.a for dirac in rv.get_piecewise_pdf().getDiracs()],
+        #                         [dirac.f for dirac in rv.get_piecewise_pdf().getDiracs()])
 
         self.demand_rv_cache[(periods, cumul_o)] = rv
         return self.demand_rv_cache[(periods, cumul_o)]

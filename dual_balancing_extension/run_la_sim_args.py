@@ -27,7 +27,7 @@ if __name__ == "__main__":
     unit_price = 0
     gamma = 1
 
-    usage_model = PoissonUsageModel(scale=1)
+    usage_model = PoissonUsageModel(scale=1, trunk=1e-3)
     results_fn = "la_results/la_results_b_{}_{}_r_{}.csv".format(str(backlogging_cost),
                                                                  str(info),
                                                                  str(rep)
