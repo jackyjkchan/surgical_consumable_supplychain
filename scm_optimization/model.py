@@ -47,8 +47,8 @@ class PoissonUsageModel(UsageModel):
         return pacal.PoissonDistr(o * self.scale, trunk_eps=self.trunk)
 
     def random(self, o=1):
-        #return self.usage(o).rand(1)[0]
-        return numpy.random.poisson(o * self.scale)
+        return self.usage(o).rand(1)[0]
+        #return numpy.random.poisson(o * self.scale)
 
 
 class BinomUsageModel(UsageModel):
