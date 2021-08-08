@@ -97,18 +97,18 @@ class Hospital_LA:
 class Hospital_LA_MDP:
     def __init__(self, la_model, periods=21):
         mdps = {
-            (10, 1, 0): '2021-08-07_base_experiment_1e-3\\2021-08-07_base_experiment_detailed_1e-3_0_model.pickle',
-            (10, 1, 1): '2021-08-07_base_experiment_1e-3\\2021-08-07_base_experiment_detailed_1e-3_4_model.pickle',
-            (10, 1, 2): '2021-08-07_base_experiment_1e-3\\2021-08-07_base_experiment_detailed_1e-3_8_model.pickle',
-            (100, 1, 0): '2021-08-07_base_experiment_1e-3\\2021-08-07_base_experiment_detailed_1e-3_1_model.pickle',
-            (100, 1, 1): '2021-08-07_base_experiment_1e-3\\2021-08-07_base_experiment_detailed_1e-3_5_model.pickle',
-            (100, 1, 2): '2021-08-07_base_experiment_1e-3\\2021-08-07_base_experiment_detailed_1e-3_9_model.pickle',
-            (1000, 1, 0): '2021-08-07_base_experiment_1e-3\\2021-08-07_base_experiment_detailed_1e-3_2_model.pickle',
-            (1000, 1, 1): '2021-08-07_base_experiment_1e-3\\2021-08-07_base_experiment_detailed_1e-3_6_model.pickle',
-            (1000, 1, 2): '2021-08-07_base_experiment_1e-3\\2021-08-07_base_experiment_detailed_1e-3_10_model.pickle',
-            (10000, 1, 0): '2021-08-07_base_experiment_1e-3\\2021-08-07_base_experiment_detailed_1e-3_3_model.pickle',
-            (10000, 1, 1): '2021-08-07_base_experiment_1e-3\\2021-08-07_base_experiment_detailed_1e-3_7_model.pickle',
-            (10000, 1, 2): '2021-08-07_base_experiment_1e-3\\2021-08-07_base_experiment_detailed_1e-3_11_model.pickle'}
+            (10, 1, 0): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_0_model.pickle',
+            (10, 1, 1): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_4_model.pickle',
+            (10, 1, 2): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_8_model.pickle',
+            (100, 1, 0): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_1_model.pickle',
+            (100, 1, 1): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_5_model.pickle',
+            (100, 1, 2): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_9_model.pickle',
+            (1000, 1, 0): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_2_model.pickle',
+            (1000, 1, 1): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_6_model.pickle',
+            (1000, 1, 2): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_10_model.pickle',
+            (10000, 1, 0): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_3_model.pickle',
+            (10000, 1, 1): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_7_model.pickle',
+            (10000, 1, 2): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_11_model.pickle'}
         # for pkl in glob.glob("2021-08-07_base_experiment_1e-3/*"):
         #     mdp_model = pickle.load(open(pkl, "rb"))
         #     mdp_info = len(mdp_model.info_state_rvs) - 1 if str(mdp_model.info_state_rvs[-1]) != '0' else 0
