@@ -183,7 +183,7 @@ class Hospital_LA_MDP:
             self.backlog_cost_incurred_la -= self.la_model.b * min([0, x_la])
             self.holding_cost_incurred_la += self.la_model.h * max([0, x_la])
 
-            self.cost_incurred_mdp += self.la_model.h * max([0, x_mdp]) - self.la_model.b * min([0, x_la])
+            self.cost_incurred_mdp += self.la_model.h * max([0, x_mdp]) - self.la_model.b * min([0, x_mdp])
             self.backlog_cost_incurred_mdp -= self.la_model.b * min([0, x_mdp])
             self.holding_cost_incurred_mdp += self.la_model.h * max([0, x_mdp])
 
