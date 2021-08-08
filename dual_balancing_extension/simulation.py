@@ -100,15 +100,19 @@ class Hospital_LA_MDP:
             (10, 1, 0): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_0_model.pickle',
             (10, 1, 1): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_4_model.pickle',
             (10, 1, 2): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_8_model.pickle',
+            (10, 1, 3): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_12_model.pickle',
             (100, 1, 0): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_1_model.pickle',
             (100, 1, 1): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_5_model.pickle',
             (100, 1, 2): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_9_model.pickle',
+            (100, 1, 3): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_13_model.pickle',
             (1000, 1, 0): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_2_model.pickle',
             (1000, 1, 1): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_6_model.pickle',
             (1000, 1, 2): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_10_model.pickle',
+            (1000, 1, 3): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_14_model.pickle',
             (10000, 1, 0): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_3_model.pickle',
             (10000, 1, 1): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_7_model.pickle',
-            (10000, 1, 2): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_11_model.pickle'}
+            (10000, 1, 2): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_11_model.pickle',
+            (10000, 1, 3): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_15_model.pickle'}
         # for pkl in glob.glob("2021-08-07_base_experiment_1e-3/*"):
         #     mdp_model = pickle.load(open(pkl, "rb"))
         #     mdp_info = len(mdp_model.info_state_rvs) - 1 if str(mdp_model.info_state_rvs[-1]) != '0' else 0
@@ -199,52 +203,44 @@ class Hospital_LA_MDP:
 
 
 if __name__ == "__main__":
-    backlogging_cost = 1000
-    infos = [1]
 
-    gamma = 1
-    lead_time = 0
-    info = 0
 
-    results = pd.DataFrame()
-    holding_cost = 1
+    info_state_rvs = [pacal.ConstDistr(0)] * info + \
+                     [pacal.BinomialDistr(10, 0.5)]
 
-    setup_cost = 0
-    unit_price = 0
-    usage_model = PoissonUsageModel(scale=1)
+    model = DualBalancing(gamma,
+                          lead_time,
+                          info_state_rvs,
+                          holding_cost,
+                          backlogging_cost,
+                          setup_cost,
+                          unit_price,
+                          usage_model=usage_model)
 
-    s = 3000
+    print("backlogging cost:", backlogging_cost, " info: ", info, " rep: ", rep)
 
-    for info in infos:
-        results_fn = "db_results_b_{}_{}_r_{}.csv".format(str(backlogging_cost), str(info), str(s))
-        info_state_rvs = [pacal.ConstDistr(0)] * info + \
-                         [pacal.BinomialDistr(10, 0.5)]
-        model = DualBalancing(gamma,
-                              lead_time,
-                              info_state_rvs,
-                              holding_cost,
-                              backlogging_cost,
-                              setup_cost,
-                              unit_price,
-                              usage_model=usage_model)
+    hospital = Hospital_LA_MDP(la_model=model, periods=21)
+    hospital.run()
 
-        for i in range(s, s+1000):
-            print("info: ", info, "rep: ", i)
-            hospital = Hospital(db_model=model, periods=20)
-            hospital.run()
-            fn = "hospital_info{}_rep{}_b{}_r_{}.pickle".format(str(info), str(i), str(backlogging_cost), str(i))
-            # pickle.dump(hospital, open(fn, 'wb'))
-            results = results.append({
-                "pickle": fn,
-                "info": info,
-                "rep": i,
-                "cost": hospital.cost_incurred,
-                "backlog_cost_incurred": hospital.backlog_cost_incurred,
-                "holding_cost_incurred": hospital.holding_cost_incurred,
-                "schedule": hospital.schedule,
-                "order_cont": hospital.order_continuous,
-                "order": hospital.order,
-                "demand": hospital.demand,
-                "inventory": hospital.inventory_level
-            }, ignore_index=True)
-            results.to_csv(results_fn)
+    result = {
+        "info": info,
+        "backlogging_cost": backlogging_cost,
+        "rep": rep,
+        "cost_la": hospital.cost_incurred_la,
+        "backlog_cost_incurred_la": hospital.backlog_cost_incurred_la,
+        "holding_cost_incurred_la": hospital.holding_cost_incurred_la,
+
+        "cost_mdp": hospital.cost_incurred_mdp,
+        "backlog_cost_incurred_mdp": hospital.backlog_cost_incurred_mdp,
+        "holding_cost_incurred_mdp": hospital.holding_cost_incurred_mdp,
+
+        "schedule": hospital.schedule,
+        "demand": hospital.demand,
+        "order_la": hospital.order_la,
+        "inventory_la": hospital.inventory_level_la,
+        "order_mdp": hospital.order_mdp,
+        "order_upto": hospital.order_up_to_mdp,
+        "inventory_mdp": hospital.inventory_level_mdp,
+
+        "run_time_min": (time.time() - start_time)/60
+    }
