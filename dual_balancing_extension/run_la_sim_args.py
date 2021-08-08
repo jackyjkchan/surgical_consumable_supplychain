@@ -2,7 +2,7 @@ from scm_optimization.integer_dual_balancing import DualBalancing
 from random import random
 from scm_optimization.model import *
 from scipy.optimize import minimize, bisect, minimize_scalar
-from dual_balancing_extension.simulation import Hospital_LA
+from dual_balancing_extension.simulation import Hospital_LA_MDP
 import pandas as pd
 import pickle
 import sys
@@ -55,21 +55,29 @@ if __name__ == "__main__":
 
     print("backlogging cost:", backlogging_cost, " info: ", info, " rep: ", rep)
 
-    hospital = Hospital_LA(model=model, periods=20)
+    hospital = Hospital_LA_MDP(la_model=model, periods=21)
     hospital.run()
 
     result = {
         "info": info,
         "backlogging_cost": backlogging_cost,
         "rep": rep,
-        "cost": hospital.cost_incurred,
-        "backlog_cost_incurred": hospital.backlog_cost_incurred,
-        "holding_cost_incurred": hospital.holding_cost_incurred,
+        "cost_la": hospital.cost_incurred_la,
+        "backlog_cost_incurred_la": hospital.backlog_cost_incurred_la,
+        "holding_cost_incurred_la": hospital.holding_cost_incurred_la,
+
+        "cost_mdp": hospital.cost_incurred_mdp,
+        "backlog_cost_incurred_mdp": hospital.backlog_cost_incurred_mdp,
+        "holding_cost_incurred_mdp": hospital.holding_cost_incurred_mdp,
+
         "schedule": hospital.schedule,
-        "order_cont": hospital.order_continuous,
-        "order": hospital.order,
         "demand": hospital.demand,
-        "inventory": hospital.inventory_level,
+        "order_la": hospital.order_la,
+        "inventory_la": hospital.inventory_level_la,
+        "order_mdp": hospital.order_mdp,
+        "order_upto": hospital.order_up_to_mdp,
+        "inventory_mdp": hospital.inventory_level_mdp,
+
         "run_time_min": (time.time() - start_time)/60
     }
     if binom_usage_n:

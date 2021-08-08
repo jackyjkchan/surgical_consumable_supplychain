@@ -145,7 +145,7 @@ class DualBalancing:
         return rv
 
     def window_demand(self, t, j, o):
-        print("in window_demand", t, j, o)
+        #print("in window_demand", t, j, o)
         """
         :param t: current period, dummy variable for stationary case
         :param j: end period (inclusive) 0 is the last period.
