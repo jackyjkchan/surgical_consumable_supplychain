@@ -157,9 +157,15 @@ class Hospital_LA_MDP:
         i_max = len(self.schedule)
         while self.clock < len(self.schedule):
             mdp_o = o if len(o) == self.n_info else o + (0,) * (self.n_info - len(o))
+            mdp_o = mdp_o if len(mdp_o) else (0,)
+            
             mdp_t = self.periods - self.clock
             t = self.clock_to_time(self.clock)
+
+            order_up_to = int(self.mdp_model.v_function_argmin(mdp_t, mdp_o))
+            print("order_up_to: ", order_up_to)
             order_q = self.la_model.order_la(t, x_la, o)
+
             self.order_la[self.clock] = order_q
 
             order_up_to = int(self.mdp_model.v_function_argmin(mdp_t, mdp_o))
