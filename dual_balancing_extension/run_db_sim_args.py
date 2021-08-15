@@ -6,7 +6,6 @@ from dual_balancing_extension.simulation import Hospital_LA_MDP, Hospital_DB_MDP
 import pandas as pd
 import pickle
 import sys
-from multiprocessing import Pool
 
 
 time.time()
@@ -32,9 +31,7 @@ def run_sim(args):
     info_state_rvs = [pacal.ConstDistr(0)] * info + \
                      [pacal.BinomialDistr(10, 0.5)]
 
-    results_fn = outdir + "/db_results_b_{}_{}_r_{}.csv".format(str(backlogging_cost),
-                                                                str(info),
-                                                                str(rep))
+
 
     model = DualBalancing(gamma,
                           lead_time,
@@ -75,6 +72,11 @@ def run_sim(args):
 
     results = results.append(result, ignore_index=True)
     print(results)
+    results_fn = outdir + "/db_results_b_{}_{}_r_{}_{}.csv".format(str(backlogging_cost),
+                                                                   str(info),
+                                                                   str(rep),
+                                                                   datetime.now().strftime("%Y-%M-%d_%H%M%S%f")
+                                                                   )
     results.to_csv(results_fn, index=False)
     return results_fn
 
@@ -85,7 +87,7 @@ if __name__ == "__main__":
 
     backlogging_costs = [10, 100, 1000]
     infos = [0, 1, 2, 3]
-    reps = list(range(1))
+    reps = list(range(200))
 
     args_list = []
     for backlogging_cost in backlogging_costs:
@@ -98,11 +100,12 @@ if __name__ == "__main__":
                      "outdir":outdir}
                 )
 
-
-    with Pool(40) as p:
-        results_files = p.map(run_sim, args_list)
+    results_files = []
+    for arg in args_list:
+        run_sim(arg)
+        results_files.append(run_sim(arg))
 
     all_results = pd.DataFrame()
     for fn in results_files:
         all_results = pd.concat([all_results, pd.read_csv(fn)])
-    all_results.to_csv(outdir+"/ALL_RESULTS_{}.csv".format(datetime.now().strftime("%Y-%M-%d_%H%M")), index=False)
+    all_results.to_csv(outdir + "/ALL_RESULTS_{}.csv".format(datetime.now().strftime("%Y-%M-%d_%H%M%S%f")), index=False)
