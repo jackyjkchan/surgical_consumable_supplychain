@@ -90,9 +90,9 @@ if __name__ == "__main__":
     reps = list(range(100))
 
     args_list = []
-    for backlogging_cost in backlogging_costs:
-        for info in infos:
-            for rep in reps:
+    for rep in reps:
+        for backlogging_cost in backlogging_costs:
+            for info in infos:
                 args_list.append(
                     {"backlogging_cost": backlogging_cost,
                      "info": info,
@@ -108,4 +108,4 @@ if __name__ == "__main__":
     all_results = pd.DataFrame()
     for fn in results_files:
         all_results = pd.concat([all_results, pd.read_csv(fn)])
-    all_results.to_csv(outdir + "/ALL_RESULTS_{}.csv".format(datetime.now().strftime("%Y-%M-%d_%H%M%S%f")), index=False)
+    all_results.to_csv(outdir + "/ALL_RESULTS_{}.csv".format(datetime.now().strftime("%Y-%m-%d_%H%M%S%f")), index=False)
