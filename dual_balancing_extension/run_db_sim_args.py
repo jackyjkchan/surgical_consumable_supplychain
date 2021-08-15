@@ -83,9 +83,9 @@ if __name__ == "__main__":
 
     outdir = sys.argv[1] if len(sys.argv) > 1 else "db_results"
 
-    backlogging_costs = [10]
-    infos = [0 ]
-    reps = list(range(2))
+    backlogging_costs = [10, 100, 1000]
+    infos = [0, 1, 2, 3]
+    reps = list(range(1))
 
     args_list = []
     for backlogging_cost in backlogging_costs:
