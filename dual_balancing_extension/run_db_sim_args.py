@@ -87,7 +87,7 @@ if __name__ == "__main__":
 
     backlogging_costs = [10, 100, 1000]
     infos = [0, 1, 2, 3]
-    reps = list(range(200))
+    reps = list(range(100))
 
     args_list = []
     for backlogging_cost in backlogging_costs:
