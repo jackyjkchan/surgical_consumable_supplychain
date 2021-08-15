@@ -202,7 +202,117 @@ class Hospital_LA_MDP:
             print("inventory_level_mdp: ", self.inventory_level_mdp)
 
 
+class Hospital_DB_MDP:
+    def __init__(self, db_model, periods=21):
+        mdps = {
+            (10, 1, 0): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_0_model.pickle',
+            (10, 1, 1): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_4_model.pickle',
+            (10, 1, 2): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_8_model.pickle',
+            (10, 1, 3): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_12_model.pickle',
+            (100, 1, 0): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_1_model.pickle',
+            (100, 1, 1): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_5_model.pickle',
+            (100, 1, 2): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_9_model.pickle',
+            (100, 1, 3): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_13_model.pickle',
+            (1000, 1, 0): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_2_model.pickle',
+            (1000, 1, 1): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_6_model.pickle',
+            (1000, 1, 2): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_10_model.pickle',
+            (1000, 1, 3): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_14_model.pickle',
+            (10000, 1, 0): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_3_model.pickle',
+            (10000, 1, 1): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_7_model.pickle',
+            (10000, 1, 2): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_11_model.pickle',
+            (10000, 1, 3): '2021-08-07_base_experiment_1e-3/2021-08-07_base_experiment_detailed_1e-3_15_model.pickle'}
+        # for pkl in glob.glob("2021-08-07_base_experiment_1e-3/*"):
+        #     mdp_model = pickle.load(open(pkl, "rb"))
+        #     mdp_info = len(mdp_model.info_state_rvs) - 1 if str(mdp_model.info_state_rvs[-1]) != '0' else 0
+        #     mdps[(mdp_model.b, mdp_model.h, mdp_info)] = pkl
+        # print(mdps)
+
+        self.db_model = db_model
+
+        self.b = db_model.b
+        self.h = db_model.h
+        self.n_info = len(db_model.info_state_rvs) - 1
+
+        self.mdp_model = pickle.load(open(mdps[(self.b, self.h, self.n_info)], 'rb'))
+
+        self.periods = periods
+
+        self.schedule = [0] + list(sum(self.db_model.info_state_rvs).rand(n=periods))
+        self.demand = [db_model.usage_model.random(x) for x in self.schedule]
+
+        self.order_db = [0] * (periods + 1)
+        self.order_mdp = [0] * (periods + 1)
+        self.order_up_to_mdp = [0] * (periods + 1)
+
+        self.inventory_level_db = [0] * (periods + 1)
+        self.inventory_level_mdp = [0] * (periods + 1)
+        # self.inventory_position = [0] * (periods + 1)
+        self.cost_incurred_db = 0
+        self.backlog_cost_incurred_db = 0
+        self.holding_cost_incurred_db = 0
+
+        self.cost_incurred_mdp = 0
+        self.backlog_cost_incurred_mdp = 0
+        self.holding_cost_incurred_mdp = 0
+
+        self.clock = 1
+
+    def clock_to_time(self, clock):
+        time = self.periods - clock
+        return time
+
+    def run(self):
+        x_db = self.inventory_level_db[self.clock - 1]
+        x_mdp = self.inventory_level_mdp[self.clock - 1]
+
+        o = tuple(self.schedule[self.clock: self.clock + self.n_info])
+        i_max = len(self.schedule)
+        while self.clock < len(self.schedule):
+            mdp_o = o if len(o) == self.n_info else o + (0,) * (self.n_info - len(o))
+            mdp_o = mdp_o if len(mdp_o) else (0,)
+
+            mdp_t = self.periods - self.clock
+            t = self.clock_to_time(self.clock)
+
+            order_up_to = int(self.mdp_model.v_function_argmin(mdp_t, mdp_o))
+            print("order_up_to: ", order_up_to)
+            q = self.db_model.order_q_continuous(t, x_db, o)
+            order_db = int(q) if random() > q - int(q) else int(q) + 1
+
+            self.order_db[self.clock] = order_db
+
+            order_up_to = int(self.mdp_model.v_function_argmin(mdp_t, mdp_o))
+            order_mdp = int(max([0, order_up_to - x_mdp]))
+            self.order_up_to_mdp[self.clock] = order_up_to
+            self.order_mdp[self.clock] = order_mdp
+
+            x_db += order_db - self.demand[self.clock]
+            self.inventory_level_db[self.clock] = x_db
+
+            x_mdp += order_mdp - self.demand[self.clock]
+            self.inventory_level_mdp[self.clock] = x_mdp
+
+            self.cost_incurred_db += self.db_model.h * max([0, x_db]) - self.db_model.b * min([0, x_db])
+            self.backlog_cost_incurred_db -= self.db_model.b * min([0, x_db])
+            self.holding_cost_incurred_db += self.db_model.h * max([0, x_db])
+
+            self.cost_incurred_mdp += self.db_model.h * max([0, x_mdp]) - self.db_model.b * min([0, x_mdp])
+            self.backlog_cost_incurred_mdp -= self.db_model.b * min([0, x_mdp])
+            self.holding_cost_incurred_mdp += self.db_model.h * max([0, x_mdp])
+
+            self.clock += 1
+            o = tuple(self.schedule[self.clock: min([self.clock + self.n_info, i_max])])
+
+            print("schedule: ", self.schedule)
+            print("demand: ", self.demand)
+            print("order_db: ", self.order_db)
+            print("order_mdp: ", self.order_mdp)
+            print("inventory_level_db: ", self.inventory_level_db)
+            print("inventory_level_mdp: ", self.inventory_level_mdp)
+
+
 if __name__ == "__main__":
+
 
 
     info_state_rvs = [pacal.ConstDistr(0)] * info + \
