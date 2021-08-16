@@ -75,14 +75,14 @@ def run_sim(args):
     results_fn = outdir + "/db_results_b_{}_{}_r_{}_{}.csv".format(str(backlogging_cost),
                                                                    str(info),
                                                                    str(rep),
-                                                                   datetime.now().strftime("%Y-%M-%d_%H%M%S%f")
+                                                                   datetime.now().strftime("%Y-%m-%d_%H%M_%S_%f")
                                                                    )
     results.to_csv(results_fn, index=False)
     return results_fn
 
 
 if __name__ == "__main__":
-
+    import random
     outdir = sys.argv[1] if len(sys.argv) > 1 else "db_results"
 
     backlogging_costs = [10, 100, 1000]
@@ -101,6 +101,8 @@ if __name__ == "__main__":
                 )
 
     results_files = []
+    random.shuffle(args_list)
+
     for arg in args_list:
         run_sim(arg)
         results_files.append(run_sim(arg))
