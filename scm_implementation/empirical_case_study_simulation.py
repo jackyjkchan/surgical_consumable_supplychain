@@ -3,16 +3,19 @@ from scm_simulation.hospital import Hospital, EmpiricalElectiveSurgeryDemandProc
     ParametricElectiveSurgeryDemandProcessWithPoissonUsage, \
     ParametricEmergencySurgeryDemandProcessWithTruncatedPoissonUsage, \
     ParametricElectiveSurgeryDemandProcessWithTruncatedPoissonUsage
-
+from scm_optimization.integer_dual_balancing import DualBalancing
+from scm_optimization.model import *
 from scm_simulation.item import Item
 from scm_simulation.surgery import Surgery
 from scm_simulation.rng_classes import GeneratePoisson, GenerateFromSample, GenerateDeterministic
-from scm_simulation.order_policy import AdvancedInfoSsPolicy
+from scm_simulation.order_policy import AdvancedInfoSsPolicy,  LAPolicy
 import pickle
 import pandas as pd
 import numpy as np
 from multiprocessing import Pool
 from datetime import datetime, date
+from scm_implementation.ns_info_state_rvs.ns_info_state_rvs import elective_info_rvs, emergency_info_rvs
+
 
 """
 Elective and emergency surgeries per day are empirically generated
@@ -68,6 +71,69 @@ def run(args):
          "seed": seed
          }
     print("Finished: ", datetime.now().isoformat(), "-", item_id, b, n, seed)
+    return r
+
+
+def run_la_policy(args):
+    start_time = time.time()
+    item_id, b, n, lt, seed = args
+
+    info_state_rvs = [emergency_info_rvs[item_id], pacal.ConstDistr(0)]
+
+    usage_model = PoissonUsageModel(scale=1, trunk=1e-3)
+    la_model = DualBalancing(1,
+                             lt,
+                             info_state_rvs,
+                             1,
+                             b,
+                             0,
+                             0,
+                             usage_model=usage_model)
+
+    policy = {item_id: LAPolicy(item_id, la_model=la_model)}
+    order_lt = {item_id: GenerateDeterministic(lt)}
+
+    elective_process = ParametricElectiveSurgeryDemandProcessWithTruncatedPoissonUsage(seed=seed)
+    emergency_process = ParametricEmergencySurgeryDemandProcessWithTruncatedPoissonUsage(seed=seed)
+
+    hospital = Hospital([item_id],
+                        policy,
+                        order_lt,
+                        emergency_process,
+                        elective_process,
+                        warm_up=7,
+                        sim_time=365,
+                        end_buffer=7)
+
+    hospital.run_simulation()
+    hospital.trim_data()
+
+    stock_outs = sum(len(d) for d in hospital.full_surgery_backlog)
+    service_level = sum(len(d) for d in hospital.full_elective_schedule) \
+                    + sum(len(d) for d in hospital.full_emergency_schedule)
+    service_level = 1 - stock_outs / service_level
+    r = {"item_id": [item_id],
+         "backlogging_cost": [b],
+         "info_horizon": [n],
+         "lead_time": [lt],
+         "average_inventory_level": [np.mean(hospital.full_inventory_lvl[item_id])],
+         "full_inventory_lvl": [hospital.full_inventory_lvl[item_id]],
+         "surgeries_backlogged": [stock_outs],
+         "service_level": [service_level],
+         "seed": [seed],
+         "run_time_min": [(time.time() - start_time) / 60]
+         }
+    print("Finished: ", datetime.now().isoformat(), "-", item_id, b, n, seed)
+
+    results_fn = "la_case_study_results_item_{}_lt_{}_b_{}_seed_{}_{}.csv".format(
+                                                                   item_id,
+                                                                    str(lt),
+                                                                   str(b),
+                                                                   str(seed),
+                                                                   datetime.now().strftime("%Y-%m-%d_%H%M_%S_%f")
+                                                                   )
+
+    pd.DataFrame(r).to_csv(results_fn, index=False)
     return r
 
 

@@ -127,7 +127,7 @@ class DualBalancing:
         self.demand_rv_cache = {}  # (periods, o) -> RV
         self.q_cache = {}
 
-    def trunk_rv(self, rv, trunk=1e-5):
+    def trunk_rv(self, rv, trunk=1e-3):
         a = [dirac.a for dirac in rv.get_piecewise_pdf().getDiracs()]
         f = [dirac.f for dirac in rv.get_piecewise_pdf().getDiracs()]
         head = 0
@@ -145,7 +145,7 @@ class DualBalancing:
         return rv
 
     def window_demand(self, t, j, o):
-        #print("in window_demand", t, j, o)
+        print("in window_demand", t, j, o)
         """
         :param t: current period, dummy variable for stationary case
         :param j: end period (inclusive) 0 is the last period.
@@ -170,6 +170,7 @@ class DualBalancing:
         #                         [dirac.f for dirac in rv.get_piecewise_pdf().getDiracs()])
 
         self.demand_rv_cache[(periods, cumul_o)] = rv
+        print(rv.get_piecewise_pdf().getDiracs())
         return self.demand_rv_cache[(periods, cumul_o)]
 
     def h_db(self, q, t, x, o):
@@ -188,11 +189,12 @@ class DualBalancing:
                                                  )
                                    )
             diff = over_stock.mean() * self.h
-            if diff < self.usage_model.trunk:
+            if diff < 0.1:
                 #print(t, s)
                 break
             expected_cost += over_stock.mean() * self.h
             s -= 1
+
         return expected_cost
 
     def pi_db(self, q, t, x, o):
@@ -212,8 +214,13 @@ class DualBalancing:
             if cost < prev:
                 prev = cost
             else:
+                print("order_la:")
+                print("    args (t, x, o):", t, x, o)
+                print("    q:", q-1)
                 return q-1
         print("MAXIMUM HIT: ERROR")
+
+
         return q
 
     # @lru_cache()

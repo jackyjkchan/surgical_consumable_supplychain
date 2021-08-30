@@ -44,6 +44,30 @@ class AdvancedInfoSsPolicy(OrderPolicy):
         return action
 
 
+class LAPolicy(OrderPolicy):
+
+    def __init__(self, item_id, la_model):
+        self.item_id = item_id
+        self.la_model = la_model
+        self.granularity = 1
+
+    def action(self, hospital):
+        iid = self.item_id
+        ts = range(hospital.clock, min(hospital.clock + 14, hospital.max_periods-1))
+        # Extract info state from hospital for item using elective schedule
+        info_state = list(sum(surgery.item_infos[iid] for surgery in hospital.full_elective_schedule[t]) for t in ts)
+        info_state[0] = info_state[0] + sum(surgery.item_infos[iid] for surgery in hospital.curr_surgery_backlog)
+        # Round to granularity
+        info_state = tuple(round(info / self.granularity) * self.granularity for info in info_state)
+        # Cap to policy max levels
+        x = hospital.curr_inventory_position[self.item_id]
+
+        t_to_go = min(27, hospital.sim_time-hospital.clock)
+        action = self.la_model.order_la(t_to_go, x, info_state)
+
+        return action
+
+
 class FixedSsPolicy(OrderPolicy):
 
     def __init__(self, item_id, order_up_lvl, reorder_lvl):
