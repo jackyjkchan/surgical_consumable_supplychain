@@ -127,7 +127,7 @@ class DualBalancing:
         self.demand_rv_cache = {}  # (periods, o) -> RV
         self.q_cache = {}
 
-    def trunk_rv(self, rv, trunk=1e-3):
+    def trunk_rv(self, rv, trunk=1e-4):
         a = [dirac.a for dirac in rv.get_piecewise_pdf().getDiracs()]
         f = [dirac.f for dirac in rv.get_piecewise_pdf().getDiracs()]
         head = 0
