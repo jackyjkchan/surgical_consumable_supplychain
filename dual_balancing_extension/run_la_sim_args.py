@@ -34,6 +34,7 @@ if __name__ == "__main__":
                                                                  )
 
     if binom_usage_n:
+        print("Binomial case: n=", binom_usage_n)
         usage_model = BinomUsageModel(n=binom_usage_n, p=1 / binom_usage_n)
         results_fn = "la_binomial_usage_results/la_results_b_{}_n_{}_{}_r_{}.csv".format(str(backlogging_cost),
                                                                                          str(binom_usage_n),
