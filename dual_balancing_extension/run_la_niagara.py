@@ -21,7 +21,7 @@ if __name__ == "__main__":
 
     lead_time = 0
 
-    results = pd.DataFrame()
+
 
     holding_cost = 1
     setup_cost = 0
@@ -44,8 +44,8 @@ if __name__ == "__main__":
 
     print("backlogging cost:", backlogging_cost, " info: ", info)
 
-    for rep in range(100):
-
+    for rep in range(1000):
+        results = pd.DataFrame()
         hospital = Hospital_LA_MDP(la_model=model, periods=21)
         hospital.run()
 
@@ -88,7 +88,7 @@ if __name__ == "__main__":
                                                                str(rep),
                                                                datetime.now().strftime("%Y-%m-%d_%H%M_%S_%f")
                                                                )
-        
+
         results = results.append(result, ignore_index=True)
         print(results)
         results.to_csv(outdir + "/" + results_fn)
