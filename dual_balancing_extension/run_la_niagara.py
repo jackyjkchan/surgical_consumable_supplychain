@@ -45,16 +45,6 @@ if __name__ == "__main__":
     print("backlogging cost:", backlogging_cost, " info: ", info)
 
     for rep in range(100):
-        results_fn = "la_binomial_usage_results/la_results_b_{}_n_{}_{}_r_{}.csv".format(str(backlogging_cost),
-                                                                                         str(binom_usage_n),
-                                                                                         str(info),
-                                                                                         str(rep)
-                                                                                         ) if binom_usage_n \
-            else \
-            "la_results/la_results_b_{}_{}_r_{}.csv".format(str(backlogging_cost),
-                                                            str(info),
-                                                            str(rep)
-                                                            )
 
         hospital = Hospital_LA_MDP(la_model=model, periods=21)
         hospital.run()
@@ -84,6 +74,21 @@ if __name__ == "__main__":
         if binom_usage_n:
             result["binomial_n"] = binom_usage_n
             result["binomial_p"] = 1 / binom_usage_n,
+
+        results_fn = "la_binomial_usage_results/la_results_b_{}_n_{}_{}_r_{}_{}.csv".format(str(backlogging_cost),
+                                                                                            str(binom_usage_n),
+                                                                                            str(info),
+                                                                                            str(rep),
+                                                                                            datetime.now().strftime(
+                                                                                                "%Y-%m-%d_%H%M_%S_%f")
+                                                                                            ) if binom_usage_n \
+            else \
+            "la_results/la_results_b_{}_{}_r_{}_{}.csv".format(str(backlogging_cost),
+                                                               str(info),
+                                                               str(rep),
+                                                               datetime.now().strftime("%Y-%m-%d_%H%M_%S_%f")
+                                                               )
+        
         results = results.append(result, ignore_index=True)
         print(results)
         results.to_csv(outdir + "/" + results_fn)
