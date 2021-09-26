@@ -379,8 +379,9 @@ class LA_DB_Model:
             return 0
         else:
             # Exploit S s structure
-            y = self.order_la(t, x, o)
-            k = self.k if y > 0 else 0
+            q = self.order_la(t, x, o)
+            y = x+q
+            k = self.k if q > 0 else 0
             j_value = k + self.v_function_la(t, y, o)
 
             self.value_function_j[(t, x, o)] = j_value
