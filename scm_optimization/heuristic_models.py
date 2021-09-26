@@ -3,7 +3,7 @@ from scipy.optimize import minimize, bisect, minimize_scalar
 from functools import lru_cache
 
 
-class DualBalancing:
+class LA_DB_Model:
     @classmethod
     def read_pickle(cls, filename):
         with open(filename, "rb") as f:
@@ -70,6 +70,8 @@ class DualBalancing:
         self.g_h = {}
         self.g_b = {}
         self.g_p = {}
+
+        self.order_la_cache = {}
 
         ### Apppend Const(0) to info_state_rvs if leadtime > info_horizon
         if len(self.info_state_rvs) < self.lead_time + 1:
@@ -145,7 +147,7 @@ class DualBalancing:
         return rv
 
     def window_demand(self, t, j, o):
-        print("in window_demand", t, j, o)
+        #print("in window_demand", t, j, o)
         """
         :param t: current period, dummy variable for stationary case
         :param j: end period (inclusive) 0 is the last period.
@@ -170,11 +172,11 @@ class DualBalancing:
         #                         [dirac.f for dirac in rv.get_piecewise_pdf().getDiracs()])
 
         self.demand_rv_cache[(periods, cumul_o)] = rv
-        print(rv.get_piecewise_pdf().getDiracs())
+        #print(rv.get_piecewise_pdf().getDiracs())
         return self.demand_rv_cache[(periods, cumul_o)]
 
     def h_db(self, q, t, x, o):
-        print(" in h_db", q, t, x, o)
+        #print(" in h_db", q, t, x, o)
         """"Expected holding cost incurred by order size of q by those units from t to end of horizon
             state space is t for current priod
             o for info state
@@ -207,31 +209,30 @@ class DualBalancing:
         return self.h_db(q, t, x, o) + self.pi_db(q, t, x, o)
 
     def order_la(self, t, x, o):
-        print(t, x, o)
+        print("order_la state:", (t, x, o))
+        if (t, x, o) in self.order_la_cache:
+            return self.order_la_cache[(t, x, o)]
+
         prev, cost = float('inf'), float('inf')
         for q in range(0, 50):
             cost = self.la_objective(q, t, x, o)
             if cost < prev:
                 prev = cost
             else:
-                print("order_la:")
-                print("    args (t, x, o):", t, x, o)
-                print("    q:", q-1)
                 return q-1
         print("MAXIMUM HIT: ERROR")
 
-
+        self.order_la_cache[(t, x, o)] = q
+        print("order_la state:", (t, x, o), q)
         return q
 
     # @lru_cache()
     def g_objective(self, q, t, x, o):
-        #print("in g_objective")
         return max([self.h_db(q, t, x, o),
                     self.pi_db(q, t, x, o)])
 
     # @lru_cache()
     def order_q_continuous(self, t, x, o):
-        print(t, x, o)
         if (t, x, 0) in self.q_cache:
             return self.q_cache[(x, t, o)]
 
@@ -351,6 +352,7 @@ class DualBalancing:
         self.reward_funcion_g_cache[(y, lt_o)] = (1 - self.gamma) * self.c * y + self.G_future(y, lt_o)
         self.g_p[(y, lt_o)] = (1 - self.gamma) * self.c * y
         return self.reward_funcion_g_cache[(y, lt_o)]
+
     def state_transition(self, t, y, o):
         next_x = y - self.current_demand(o)
         next_o = [i + j for i, j in zip(self.info_state_rvs[1:], o[1:] + (0,))]
@@ -371,7 +373,6 @@ class DualBalancing:
                 probabilities.append(p)
         return states, probabilities
 
-
     def j_function_la(self, t, x, o):
         if (t, x, o) in self.value_function_j:
             return self.value_function_j[(t, x, o)]
@@ -379,10 +380,9 @@ class DualBalancing:
             return 0
         else:
             # Exploit S s structure
-            stock_up_lvl, base_stock_lvl = self.stock_up_level(t, o), self.base_stock_level(t, o)
-            y = stock_up_lvl if x <= base_stock_lvl else x
-            k = self.k if x <= base_stock_lvl else 0
-            j_value = k + self.v_function(t, y, o)
+            y = self.order_la(t, x, o)
+            k = self.k if y > 0 else 0
+            j_value = k + self.v_function_la(t, y, o)
 
             self.value_function_j[(t, x, o)] = j_value
             if self.detailed:
@@ -397,15 +397,44 @@ class DualBalancing:
 
             return j_value
 
+    def v_function_la(self, t, y, o):
+        if (t, y, o) in self.value_function_v:
+            return self.value_function_v[(t, y, o)]
+        next_t, next_x, next_o = self.state_transition(t, y, o)
+        new_states, probabilities = self.unpack_state_transition(next_t, next_x, next_o)
+        value = self.G(y, o) + self.gamma * sum(p * self.j_function_la(*state)
+                                                for p, state in zip(probabilities, new_states))
+
+        if self.detailed:
+            self.v_b[(t, y, o)] = self.G_b(y, o) + self.gamma * sum(p * self.j_function_b(*state)
+                                                                    for p, state in zip(probabilities, new_states))
+            self.v_h[(t, y, o)] = self.G_h(y, o) + self.gamma * sum(p * self.j_function_h(*state)
+                                                                    for p, state in zip(probabilities, new_states))
+            self.v_p[(t, y, o)] = self.G_p(y, o) + self.gamma * sum(p * self.j_function_p(*state)
+                                                                    for p, state in zip(probabilities, new_states))
+            self.v_k[(t, y, o)] = self.gamma * sum(p * self.j_function_k(*state)
+                                                   for p, state in zip(probabilities, new_states))
+        self.value_function_v[(t, y, o)] = value
+        return value
+
+    def compute_policy_la(self, args):
+        t, x, o = args
+        return self.order_la(t, x, o)
+
+    def compute_policies_parallel_la(self, t, o):
+        args = list((t, x, o) for x in range(30))
+        order_qs = Pool(40).map(self.compute_policy_la, args)
+        for order_q, arg in zip(order_qs, args):
+            self.order_la_cache[arg] = order_q
+
 
 if __name__ == "__main__":
     gamma = 1
     lead_time = 0
-    #horizon = 0
+    horizon = 5
     info_state_rvs = [pacal.ConstDistr(0),
                       pacal.ConstDistr(0),
                       pacal.BinomialDistr(10, 0.5)]
-    info_state_rvs = [pacal.BinomialDistr(10, 0.5)]
     holding_cost = 1
     backlogging_cost = 10
     setup_cost = 0
@@ -414,25 +443,30 @@ if __name__ == "__main__":
     # usage_model = lambda o: pacal.ConstDistr(o)
     # usage_model = lambda o: pacal.PoissonDistr(o, trunk_eps=1e-3)
     # sage_model = None
-    model = DualBalancing(gamma,
-                          lead_time,
-                          info_state_rvs,
-                          holding_cost,
-                          backlogging_cost,
-                          setup_cost,
-                          unit_price,
-                          usage_model=usage_model)
+    model = LA_DB_Model(gamma,
+                        lead_time,
+                        info_state_rvs,
+                        holding_cost,
+                        backlogging_cost,
+                        setup_cost,
+                        unit_price,
+                        usage_model=usage_model)
 
     s = time.time()
     for t in range(20):
-        for o in model.info_states()[-1:]:
-            o = (5, 4)
-            o=tuple()
-            for x in range(1):
-                q = model.order_q_continuous(t, x, o)
-                hc = model.h_db(q, t, x, o)
-                bc = model.pi_db(q, t, x, o)
-                print("t: {}; o: {}, x: {}".format(t, o, x))
-                print("\t q: {}, hc: {}, bc: {}".format(q, hc, bc))
+        o = model.info_states()[-1]
+        print("state:", (t, 0, o))
+        model.j_function_la(t, 0, o)
+        print("\t", "order:", model.order_la(t, 0, o))
+        print("\t", "j_func:", model.j_function_la(t, 0, o))
+
+        for o in model.info_states():
+            model.compute_policies_parallel_la(t, o)
+            for x in range(20):
+                print("state:", (t, x, o))
+                model.j_function_la(t, x, o)
+                print("\t", "order:", model.order_la(t, x, o))
+                print("\t", "j_func:", model.j_function_la(t, x, o))
 
     print("run time:", time.time() - s)
+    print(model.value_function_j)
