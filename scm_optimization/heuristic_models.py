@@ -1,5 +1,6 @@
 from scm_optimization.model import *
 from scipy.optimize import minimize, bisect, minimize_scalar
+import sys
 from functools import lru_cache
 
 
@@ -209,7 +210,6 @@ class LA_DB_Model:
         return self.h_db(q, t, x, o) + self.pi_db(q, t, x, o)
 
     def order_la(self, t, x, o):
-        print("order_la state:", (t, x, o))
         if (t, x, o) in self.order_la_cache:
             return self.order_la_cache[(t, x, o)]
 
@@ -219,11 +219,10 @@ class LA_DB_Model:
             if cost < prev:
                 prev = cost
             else:
+                q = q - 1
+                self.order_la_cache[(t, x, o)] = q
                 return q-1
         print("MAXIMUM HIT: ERROR")
-
-        self.order_la_cache[(t, x, o)] = q
-        print("order_la state:", (t, x, o), q)
         return q
 
     # @lru_cache()
@@ -427,14 +426,25 @@ class LA_DB_Model:
         for order_q, arg in zip(order_qs, args):
             self.order_la_cache[arg] = order_q
 
+    def to_pickle(self, filename):
+        with open(filename + "_model.pickle", "wb") as f:
+            pickle.dump(self, f)
+
+    @classmethod
+    def read_pickle(cls, filename):
+        with open(filename, "rb") as f:
+            m = pickle.load(f)
+        return m
+
 
 if __name__ == "__main__":
+
+
     gamma = 1
     lead_time = 0
-    horizon = 5
-    info_state_rvs = [pacal.ConstDistr(0),
-                      pacal.ConstDistr(0),
-                      pacal.BinomialDistr(10, 0.5)]
+    horizon = 2
+    info_state_rvs = [pacal.ConstDistr(0)] * (horizon - 1) \
+                     + [pacal.BinomialDistr(10, 0.5)]
     holding_cost = 1
     backlogging_cost = 10
     setup_cost = 0
@@ -451,22 +461,17 @@ if __name__ == "__main__":
                         setup_cost,
                         unit_price,
                         usage_model=usage_model)
+    prefix = "LA_Model_b_{}_info_{}".format(backlogging_cost, horizon)
 
     s = time.time()
-    for t in range(20):
-        o = model.info_states()[-1]
-        print("state:", (t, 0, o))
-        model.j_function_la(t, 0, o)
-        print("\t", "order:", model.order_la(t, 0, o))
-        print("\t", "j_func:", model.j_function_la(t, 0, o))
-
+    for t in range(21):
         for o in model.info_states():
-            model.compute_policies_parallel_la(t, o)
-            for x in range(20):
+            for x in range(30):
                 print("state:", (t, x, o))
                 model.j_function_la(t, x, o)
                 print("\t", "order:", model.order_la(t, x, o))
                 print("\t", "j_func:", model.j_function_la(t, x, o))
+        model.to_pickle(prefix)
 
     print("run time:", time.time() - s)
     print(model.value_function_j)
