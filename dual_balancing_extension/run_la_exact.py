@@ -61,6 +61,8 @@ if __name__ == "__main__":
                 model.j_function_la(t, x, o)
                 print("\t", "order:", model.order_la(t, x, o))
                 print("\t", "j_func:", model.j_function_la(t, x, o))
+        prefix2 = prefix+"_t_{}".format(t)
+        model.to_pickle(outdir+'/'+prefix2)
         model.to_pickle(fn)
 
     print("run time:", time.time() - s)
