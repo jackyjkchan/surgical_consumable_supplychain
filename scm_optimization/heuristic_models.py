@@ -221,7 +221,7 @@ class LA_DB_Model:
             else:
                 q = q - 1
                 self.order_la_cache[(t, x, o)] = q
-                return q-1
+                return q
         print("MAXIMUM HIT: ERROR")
         return q
 
