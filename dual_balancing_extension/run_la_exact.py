@@ -56,6 +56,7 @@ if __name__ == "__main__":
     s = time.time()
     for t in range(21):
         for o in model.info_states():
+
             for x in range(30):
                 print("state:", (t, x, o))
                 model.j_function_la(t, x, o)

@@ -1,5 +1,6 @@
 from scm_optimization.model import *
 from scipy.optimize import minimize, bisect, minimize_scalar
+import os
 import sys
 from functools import lru_cache
 
@@ -421,9 +422,12 @@ class LA_DB_Model:
         t, x, o = args
         return self.order_la(t, x, o)
 
-    def compute_policies_parallel_la(self, t, o):
-        args = list((t, x, o) for x in range(30))
-        order_qs = Pool(40).map(self.compute_policy_la, args)
+    def compute_policies_parallel_la(self, t, o=None):
+        if o:
+            args = list((t, x, o) for x in range(30))
+        else:
+            args = list((t, x, o) for x in range(30) for o in self.info_states())
+        order_qs = Pool(os.cpu_count()-1).map(self.compute_policy_la, args)
         for order_q, arg in zip(order_qs, args):
             self.order_la_cache[arg] = order_q
 
