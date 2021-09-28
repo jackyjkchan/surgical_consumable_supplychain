@@ -53,6 +53,9 @@ if __name__ == "__main__":
     prefix += "binomial_usage_{}".format(binom_usage_n) if binom_usage_n else ""
     fn = outdir+'/'+prefix
 
+    if os.path.isfile(fn):
+        model = LA_DB_Model.read_pickle(fn)
+
     s = time.time()
     for t in range(21):
         for o in model.info_states():
