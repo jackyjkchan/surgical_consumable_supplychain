@@ -19,6 +19,7 @@ def run_la_parallel(arg):
     segment_num = arg["segment_num"]
     #model = arg["model"]
 
+    time.sleep(1)
     time.sleep(segment_num/2)
     model = LA_DB_Model.read_pickle(fn + "_model.pickle")
     for o in o_vec:
@@ -111,6 +112,7 @@ if __name__ == "__main__":
         prefix2 = prefix+"_t_{}".format(t)
         model.to_pickle(outdir+'/'+prefix2)
         model.to_pickle(fn)
+        time.sleep(2)
 
     print("run time:", time.time() - s)
     print(model.value_function_j)
