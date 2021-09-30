@@ -60,7 +60,7 @@ if __name__ == "__main__":
     for t in range(21):
         for o in model.info_states():
 
-            for x in range(30):
+            for x in range(21):
                 print("state:", (t, x, o))
                 model.j_function_la(t, x, o)
                 print("\t", "order:", model.order_la(t, x, o))

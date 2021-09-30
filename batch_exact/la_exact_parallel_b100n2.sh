@@ -13,5 +13,5 @@ source venv/bin/activate
 export PYTHONPATH="${PYTHONPATH}:/home/s/sarhangi/jachan/surgical_consumable_supplychain"
 
 # EXECUTION COMMAND; ampersand off 40 jobs and wait
-./venv/bin/python dual_balancing_extension/run_la_exact_parallel.py $SCRATCH 1000 2
+./venv/bin/python dual_balancing_extension/run_la_exact_parallel.py $SCRATCH 100 2
 wait
