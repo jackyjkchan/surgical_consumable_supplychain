@@ -9,6 +9,7 @@ import pickle
 import sys
 import random
 import argparse
+import datetime
 
 time.time()
 
@@ -21,6 +22,8 @@ if __name__ == "__main__":
     parser.add_argument('--binom_usage_n', dest='binom_usage_n', type=int, help='binom_usage_n')
     parser.add_argument('--pools', dest='pools', type=int, help='num of parallel runners')
     parser.add_argument('--index', dest='pool_num', type=int, help='index of runner, 0 to pools - 1')
+    parser.add_argument('-t', dest='t', type=int, help='starting time step')
+
     args = parser.parse_args()
 
     print(args.backlogging_cost)
@@ -31,6 +34,7 @@ if __name__ == "__main__":
     binom_usage_n = args.binom_usage_n if args.binom_usage_n else 0
     pools = args.pools if args.pools else 2
     pool_num = args.pool_num if args.pool_num else 0
+    t = args.t if args.t else 0
 
     usage_model = BinomUsageModel(n=binom_usage_n, p=1 / binom_usage_n) if binom_usage_n else PoissonUsageModel(scale=1,
                                                                                                                 trunk=1e-3)
@@ -64,10 +68,11 @@ if __name__ == "__main__":
         model.to_pickle(fn)
     print("Writing initial model: ", fn)
 
-    for t in range(21):
+    for t in range(t, 21):
         segments = list(fn + "_t_{}_seg_{}_model.pickle".format(t, pool_num) for pool_num in range(pools))
         loading = True
         while loading:
+            print(datetime.datetime.now())
             if all(os.path.isfile(segment) for segment in segments):
                 sub_models = list(LA_DB_Model.read_pickle(segment) for segment in segments)
                 loading = False

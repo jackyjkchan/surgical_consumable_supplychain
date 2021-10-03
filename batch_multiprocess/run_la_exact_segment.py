@@ -20,6 +20,8 @@ if __name__ == "__main__":
     parser.add_argument('--binom_usage_n', dest='binom_usage_n', type=int, help='binom_usage_n')
     parser.add_argument('--pools', dest='pools', type=int, help='num of parallel runners')
     parser.add_argument('--index', dest='pool_num', type=int, help='index of runner, 0 to pools - 1')
+    parser.add_argument('-t', dest='t', type=int, help='starting time step')
+
     args = parser.parse_args()
 
     print(args.backlogging_cost)
@@ -30,13 +32,14 @@ if __name__ == "__main__":
     binom_usage_n = args.binom_usage_n if args.binom_usage_n else 0
     pools = args.pools if args.pools else 2
     pool_num = args.pool_num if args.pool_num else 0
+    t = args.t if args.t else 0
 
     prefix = "LA_Model_b_{}_info_{}".format(backlogging_cost, info)
     prefix += "binomial_usage_{}".format(binom_usage_n) if binom_usage_n else ""
     fn = outdir + '/' + prefix
     model = None
 
-    for t in range(21):
+    for t in range(t, 21):
         if t:
             fn_t = fn + "_t_{}".format(t-1) + "_model.pickle"
         else:
@@ -59,9 +62,9 @@ if __name__ == "__main__":
         for o in info_states:
             for x in range(21):
                 model.j_function_la(t, x, o)
-                print("state:", (t, x, o))
-                print("\t", "order:", model.order_la(t, x, o))
-                print("\t", "j_func:", model.j_function_la(t, x, o))
+                # print("state:", (t, x, o))
+                # print("\t", "order:", model.order_la(t, x, o))
+                # print("\t", "j_func:", model.j_function_la(t, x, o))
 
         fn_seg = fn + "_t_{}_seg_{}".format(t, pool_num)
         model.to_pickle(fn_seg)
