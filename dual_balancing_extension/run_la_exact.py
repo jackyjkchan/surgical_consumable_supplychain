@@ -54,7 +54,7 @@ if __name__ == "__main__":
     fn = outdir+'/'+prefix
 
     if os.path.isfile(fn):
-        model = LA_DB_Model.read_pickle(fn)
+        model = LA_DB_Model.read_pickle(fn+"_model.pickle")
 
     s = time.time()
     for t in range(21):

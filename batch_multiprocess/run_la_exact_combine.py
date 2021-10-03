@@ -58,7 +58,10 @@ if __name__ == "__main__":
     prefix = "LA_Model_b_{}_info_{}".format(backlogging_cost, info)
     prefix += "binomial_usage_{}".format(binom_usage_n) if binom_usage_n else ""
     fn = outdir + '/' + prefix
-    model.to_pickle(fn)
+    if os.path.isfile(fn):
+        model = LA_DB_Model.read_pickle(fn + "_model.pickle")
+    else:
+        model.to_pickle(fn)
     print("Writing initial model: ", fn)
 
     for t in range(21):
