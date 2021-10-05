@@ -35,7 +35,7 @@ if __name__ == "__main__":
     t = args.t if args.t else 0
 
     prefix = "LA_Model_b_{}_info_{}".format(backlogging_cost, info)
-    prefix += "binomial_usage_{}".format(binom_usage_n) if binom_usage_n else ""
+    prefix += "_binomial_usage_{}".format(binom_usage_n) if binom_usage_n else ""
     fn = outdir + '/' + prefix
     model = None
 

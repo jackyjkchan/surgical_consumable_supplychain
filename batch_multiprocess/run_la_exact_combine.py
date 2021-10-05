@@ -60,7 +60,7 @@ if __name__ == "__main__":
                         usage_model=usage_model)
 
     prefix = "LA_Model_b_{}_info_{}".format(backlogging_cost, info)
-    prefix += "binomial_usage_{}".format(binom_usage_n) if binom_usage_n else ""
+    prefix += "_binomial_usage_{}".format(binom_usage_n) if binom_usage_n else ""
     fn = outdir + '/' + prefix
     if os.path.isfile(fn):
         model = LA_DB_Model.read_pickle(fn + "_model.pickle")
