@@ -74,6 +74,7 @@ class LA_DB_Model:
         self.g_p = {}
 
         self.order_la_cache = {}
+        self.base_stock_la_cache = {}
 
         ### Apppend Const(0) to info_state_rvs if leadtime > info_horizon
         if len(self.info_state_rvs) < self.lead_time + 1:
@@ -213,6 +214,10 @@ class LA_DB_Model:
     def order_la(self, t, x, o):
         if (t, x, o) in self.order_la_cache:
             return self.order_la_cache[(t, x, o)]
+        if (t, o) in self.base_stock_la_cache:
+            q = max([self.base_stock_la_cache[(t, o)]-x, 0])
+            return q
+
 
         prev, cost = float('inf'), float('inf')
         for q in range(0, 50):
@@ -222,6 +227,8 @@ class LA_DB_Model:
             else:
                 q = q - 1
                 self.order_la_cache[(t, x, o)] = q
+                if x == 0:
+                    self.base_stock_la_cache[(t, o)] = q
                 return q
         print("MAXIMUM HIT: ERROR")
         return q
