@@ -62,9 +62,9 @@ if __name__ == "__main__":
         for o in info_states:
             for x in range(21):
                 model.j_function_la(t, x, o)
-                # print("state:", (t, x, o))
-                # print("\t", "order:", model.order_la(t, x, o))
-                # print("\t", "j_func:", model.j_function_la(t, x, o))
+                print("state:", (t, x, o))
+                print("\t", "order:", model.order_la(t, x, o))
+                print("\t", "j_func:", model.j_function_la(t, x, o))
 
         fn_seg = fn + "_t_{}_seg_{}".format(t, pool_num)
         model.to_pickle(fn_seg)

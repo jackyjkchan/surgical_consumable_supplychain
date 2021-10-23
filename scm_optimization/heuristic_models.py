@@ -218,7 +218,6 @@ class LA_DB_Model:
             q = max([self.base_stock_la_cache[(t, o)]-x, 0])
             return q
 
-
         prev, cost = float('inf'), float('inf')
         for q in range(0, 50):
             cost = self.la_objective(q, t, x, o)
