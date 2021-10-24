@@ -74,9 +74,12 @@ if __name__ == "__main__":
         while loading:
             print(datetime.datetime.now())
             if all(os.path.isfile(segment) for segment in segments):
-                sub_models = list(LA_DB_Model.read_pickle(segment) for segment in segments)
-                loading = False
-                print("Segments all loaded...")
+                try:
+                    sub_models = list(LA_DB_Model.read_pickle(segment) for segment in segments)
+                    loading = False
+                    print("Segments all loaded...")
+                except:
+                    pass
             else:
                 time.sleep(10)
 
@@ -86,6 +89,7 @@ if __name__ == "__main__":
             model.order_la_cache.update(sub_model.order_la_cache)
             model.reward_funcion_g_cache.update(sub_model.reward_funcion_g_cache)
             model.demand_rv_cache.update(sub_model.demand_rv_cache)
+            model.base_stock_la_cache.update(sub_model.base_stock_la_cache)
 
         prefix_t = prefix + "_t_{}".format(t)
         print("Writing model: ", prefix_t)
