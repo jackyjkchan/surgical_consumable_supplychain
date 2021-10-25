@@ -50,8 +50,11 @@ if __name__ == "__main__":
             if os.path.isfile(fn_t):
                 print("Model found, loading...")
                 time.sleep(5)
-                model = LA_DB_Model.read_pickle(fn_t)
-                loading = False
+                try:
+                    model = LA_DB_Model.read_pickle(fn_t)
+                    loading = False
+                except:
+                    pass
             else:
                 time.sleep(10)
 
