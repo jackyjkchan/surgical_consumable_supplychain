@@ -54,6 +54,7 @@ if __name__ == "__main__":
                     model = LA_DB_Model.read_pickle(fn_t)
                     loading = False
                 except:
+                    time.sleep(10)
                     pass
             else:
                 time.sleep(10)
