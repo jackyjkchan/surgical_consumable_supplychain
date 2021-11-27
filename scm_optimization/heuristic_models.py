@@ -126,7 +126,7 @@ class LA_DB_Model:
             demand_rv = pacal.DiscreteDistr([dirac.a for dirac in demand_pdf.getDiracs()],
                                             [dirac.f for dirac in demand_pdf.getDiracs()])
             demand_rv += prev
-            #demand_rv = self.trunk_rv(demand_rv)
+            # demand_rv = self.trunk_rv(demand_rv)
             self.unknown_demand_cache.append(demand_rv)
             prev = demand_rv
         self.demand_rv_cache = {}  # (periods, o) -> RV
@@ -146,11 +146,11 @@ class LA_DB_Model:
             a.pop(-1)
             f.pop(-1)
         rv = pacal.DiscreteDistr([aa for aa in a],
-                                 [ff/(1-head-tail) for ff in f])
+                                 [ff / (1 - head - tail) for ff in f])
         return rv
 
     def window_demand(self, t, j, o):
-        #print("in window_demand", t, j, o)
+        # print("in window_demand", t, j, o)
         """
         :param t: current period, dummy variable for stationary case
         :param j: end period (inclusive) 0 is the last period.
@@ -166,20 +166,20 @@ class LA_DB_Model:
             rv = self.unknown_demand_cache[-1] + self.no_info_demand
             rv = pacal.DiscreteDistr([dirac.a for dirac in rv.get_piecewise_pdf().getDiracs()],
                                      [dirac.f for dirac in rv.get_piecewise_pdf().getDiracs()])
-            #rv = self.trunk_rv(rv)
+            # rv = self.trunk_rv(rv)
             self.unknown_demand_cache.append(rv)
         index = periods - 1
         rv = self.usage_model.usage(cumul_o) + self.unknown_demand_cache[index]
         rv = self.trunk_rv(rv)
-        #rv = pacal.DiscreteDistr([dirac.a for dirac in rv.get_piecewise_pdf().getDiracs()],
+        # rv = pacal.DiscreteDistr([dirac.a for dirac in rv.get_piecewise_pdf().getDiracs()],
         #                         [dirac.f for dirac in rv.get_piecewise_pdf().getDiracs()])
 
         self.demand_rv_cache[(periods, cumul_o)] = rv
-        #print(rv.get_piecewise_pdf().getDiracs())
+        # print(rv.get_piecewise_pdf().getDiracs())
         return self.demand_rv_cache[(periods, cumul_o)]
 
     def h_db(self, q, t, x, o):
-        #print(" in h_db", q, t, x, o)
+        # print(" in h_db", q, t, x, o)
         """"Expected holding cost incurred by order size of q by those units from t to end of horizon
             state space is t for current priod
             o for info state
@@ -194,8 +194,8 @@ class LA_DB_Model:
                                                  )
                                    )
             diff = over_stock.mean() * self.h
-            if diff < 0.1:
-                #print(t, s)
+            if diff < 0.01:
+                # print(t, s)
                 break
             expected_cost += over_stock.mean() * self.h
             s -= 1
@@ -215,7 +215,7 @@ class LA_DB_Model:
         if (t, x, o) in self.order_la_cache:
             return self.order_la_cache[(t, x, o)]
         if (t, o) in self.base_stock_la_cache:
-            q = max([self.base_stock_la_cache[(t, o)]-x, 0])
+            q = max([self.base_stock_la_cache[(t, o)] - x, 0])
             return q
 
         prev, cost = float('inf'), float('inf')
@@ -243,10 +243,10 @@ class LA_DB_Model:
             return self.q_cache[(x, t, o)]
 
         q = minimize_scalar(lambda qq: self.g_objective(qq, t, x, o),
-                               bracket=[0, 50],
-                               bounds=[0, 50],
-                               method='Bounded',
-                               options={'xatol': 1e-03, 'maxiter': 500, 'disp': 0}).x
+                            bracket=[0, 50],
+                            bounds=[0, 50],
+                            method='Bounded',
+                            options={'xatol': 1e-03, 'maxiter': 500, 'disp': 0}).x
         self.q_cache[(x, t, o)] = q
         return q
 
@@ -387,7 +387,7 @@ class LA_DB_Model:
         else:
             # Exploit S s structure
             q = self.order_la(t, x, o)
-            y = x+q
+            y = x + q
             k = self.k if q > 0 else 0
             j_value = k + self.v_function_la(t, y, o)
 
@@ -424,6 +424,53 @@ class LA_DB_Model:
         self.value_function_v[(t, y, o)] = value
         return value
 
+    def j_function_db(self, t, x, o):
+        if (t, x, o) in self.value_function_j:
+            return self.value_function_j[(t, x, o)]
+        elif t == -1:
+            return 0
+        else:
+            # Exploit S s structure
+            q = self.order_q_continuous(t, x, o)
+            p_upper = q - int(q)
+            p_lower = 1 - p_upper
+            y_lower = x + int(q)
+            y_upper = y_lower + 1
+            k = self.k if q >= 1 else p_upper * self.k if q > 0 else 0
+            j_value = k + p_upper * self.v_function_db(t, y_upper, o) + p_lower * self.v_function_db(t, y_lower, o)
+
+            self.value_function_j[(t, x, o)] = j_value
+            if self.detailed:
+                j_b = p_upper * self.v_b[(t, y_upper, o)] + p_lower * self.v_b[(t, y_lower, o)]
+                j_h = p_upper * self.v_h[(t, y_upper, o)] + p_lower * self.v_h[(t, y_lower, o)]
+                j_p = p_upper * self.v_p[(t, y_upper, o)] + p_lower * self.v_p[(t, y_lower, o)]
+                j_k = k + p_upper*self.v_k[(t, y_upper, o)] + p_lower*self.v_k[(t, y_lower, o)]
+                self.j_b[(t, x, o)] = j_b
+                self.j_h[(t, x, o)] = j_h
+                self.j_p[(t, x, o)] = j_p
+                self.j_k[(t, x, o)] = j_k
+            return j_value
+
+    def v_function_db(self, t, y, o):
+        if (t, y, o) in self.value_function_v:
+            return self.value_function_v[(t, y, o)]
+        next_t, next_x, next_o = self.state_transition(t, y, o)
+        new_states, probabilities = self.unpack_state_transition(next_t, next_x, next_o)
+        value = self.G(y, o) + self.gamma * sum(p * self.j_function_la(*state)
+                                                for p, state in zip(probabilities, new_states))
+
+        if self.detailed:
+            self.v_b[(t, y, o)] = self.G_b(y, o) + self.gamma * sum(p * self.j_function_b(*state)
+                                                                    for p, state in zip(probabilities, new_states))
+            self.v_h[(t, y, o)] = self.G_h(y, o) + self.gamma * sum(p * self.j_function_h(*state)
+                                                                    for p, state in zip(probabilities, new_states))
+            self.v_p[(t, y, o)] = self.G_p(y, o) + self.gamma * sum(p * self.j_function_p(*state)
+                                                                    for p, state in zip(probabilities, new_states))
+            self.v_k[(t, y, o)] = self.gamma * sum(p * self.j_function_k(*state)
+                                                   for p, state in zip(probabilities, new_states))
+        self.value_function_v[(t, y, o)] = value
+        return value
+
     def compute_policy_la(self, args):
         t, x, o = args
         return self.order_la(t, x, o)
@@ -433,7 +480,7 @@ class LA_DB_Model:
             args = list((t, x, o) for x in range(30))
         else:
             args = list((t, x, o) for x in range(30) for o in self.info_states())
-        order_qs = Pool(os.cpu_count()-1).map(self.compute_policy_la, args)
+        order_qs = Pool(os.cpu_count() - 1).map(self.compute_policy_la, args)
         for order_q, arg in zip(order_qs, args):
             self.order_la_cache[arg] = order_q
 
@@ -449,7 +496,6 @@ class LA_DB_Model:
 
 
 if __name__ == "__main__":
-
 
     gamma = 1
     lead_time = 0
