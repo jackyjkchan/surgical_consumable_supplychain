@@ -209,7 +209,8 @@ class LA_DB_Model:
         return expected_cost
 
     def la_objective(self, q, t, x, o):
-        return self.h_db(q, t, x, o) + self.pi_db(q, t, x, o)
+        setup = self.k if q > 0 else 0
+        return self.h_db(q, t, x, o) + self.pi_db(q, t, x, o) + setup
 
     def order_la(self, t, x, o):
         if (t, x, o) in self.order_la_cache:
